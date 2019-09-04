@@ -7,8 +7,8 @@
 # @date 03/09/2019
 
 PROGNAME = matrix
-GCC = gcc-9 -std=c99 -Werror -Wall -pedantic -fopenmp
-DEPENDENCIES = matrix.c
+GCC = gcc-9 -std=c99 -pedantic -fopenmp
+DEPENDENCIES = matrix.c format.c memory.c process.c
 
 all: $(DEPENDENCIES)
 	@$(GCC) -o $(PROGNAME) $(DEPENDENCIES)

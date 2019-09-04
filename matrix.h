@@ -11,14 +11,44 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <omp.h>
 #include <time.h>
 
-// Global variables used as sparse matrix representations
+#define MEMSIZ 8
+
+// Classifying matrix types
+enum mat_type {INT, FLOAT};
+
+// Processing functions
+char *read_line(FILE *fp);
+
+// Format functions
+extern struct COO coo_format(int rows, int cols, char *values);
+
+// Memory allocations
+void *allocate(size_t size);
+void *reallocate(void *ptr, size_t size);
 
 // Coordinate Format (COO)
-typedef struct {
+struct ELEMENT {
     int x;
     int y;
     int val;
-} COO_ELEMENT;
+};
+
+struct ELEMENT_F {
+    int x;
+    int y;
+    float val;
+};
+
+struct COO {
+    int length;
+    struct ELEMENT *elements;
+};
+
+struct COO_F {
+    int length;
+    struct ELEMENT_F *elements;
+};
