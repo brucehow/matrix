@@ -9,7 +9,7 @@ operation funct -> res
 int main(int argc, char *argv[]) {
     enum mat_type type;
     int rows, cols;
-    char *data;
+    char *data = NULL;
 
     // File validation
     char *filename = "int1.in";
@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     free(buffer);
+    buffer = NULL;
     
     // Matrix rows and cols input validation
     buffer = read_line(fp);
@@ -42,6 +43,7 @@ int main(int argc, char *argv[]) {
     }
     rows = atoi(buffer);
     free(buffer);
+    buffer = NULL;
 
     buffer = read_line(fp);
     len = strlen(buffer);
@@ -53,12 +55,20 @@ int main(int argc, char *argv[]) {
     }
     cols = atoi(buffer);
     free(buffer);
+    buffer = NULL;
 
     // Data parsing
     data = read_line(fp); // free(data);
 
     // Matrix processing
     struct COO matrix = coo_format(rows, cols, data);
+    
+    // Debug printing
+    int limit = matrix.length;
+    for (int i = 0; i < limit; i++) {
+        printf("(%d, %d, %d) ", matrix.elements[i].x, matrix.elements[i].y, matrix.elements[i].value);
+    }
+    printf("\n");
 
     exit(EXIT_SUCCESS);
 }

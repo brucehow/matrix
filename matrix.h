@@ -34,13 +34,13 @@ void *reallocate(void *ptr, size_t size);
 struct ELEMENT {
     int x;
     int y;
-    int val;
+    int value;
 };
 
 struct ELEMENT_F {
     int x;
     int y;
-    float val;
+    float value;
 };
 
 struct COO {
