@@ -7,11 +7,11 @@
 # @date 03/09/2019
 
 PROGNAME = matrix
-C99 = cc -std=c99 -Werror -Wall -pedantic
+GCC = gcc-9 -std=c99 -Werror -Wall -pedantic -fopenmp
 DEPENDENCIES = matrix.c
 
-install: $(DEPENDENCIES)
-	@$(C99) -o $(PROGNAME) $(DEPENDENCIES)
+all: $(DEPENDENCIES)
+	@$(GCC) -o $(PROGNAME) $(DEPENDENCIES)
 	@echo "make: 'matrix' successfully built."
 
 clean: $(DEPENDENCIES)
