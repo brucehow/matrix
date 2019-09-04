@@ -1,11 +1,5 @@
 #include "matrix.h"
 
-/**
-check operation -> call operation -> gets best representation
-representaion received in operation func -> do operation
-operation funct -> res
-*/
-
 int main(int argc, char *argv[]) {
     enum mat_type type;
     int rows, cols;
@@ -62,13 +56,14 @@ int main(int argc, char *argv[]) {
 
     // Matrix processing
     struct COO matrix = coo_format(rows, cols, data);
-    
-    // Debug printing
+
+    /////////////////////////////////
     int limit = matrix.length;
     for (int i = 0; i < limit; i++) {
-        printf("(%d, %d, %d) ", matrix.elements[i].x, matrix.elements[i].y, matrix.elements[i].value);
+        printf("(%d,%d,%d) ", matrix.elements[i].x, matrix.elements[i].y, matrix.elements[i].value);
     }
     printf("\n");
+    /////////////////////////////////
 
     exit(EXIT_SUCCESS);
 }
