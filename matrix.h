@@ -31,15 +31,20 @@ enum mat_type {INT, FLOAT};
  */
 extern char *read_line(FILE *fp);
 
+extern enum mat_type read_mat_type(FILE *fp);
+
+extern int read_mat_dim(FILE *fp);
+
 /**
  * Represents a given matrix using the Coordinate Format 
  * 
  * @param rows Number of rows in the matrix
  * @param cols Number of columns in the matrix
- * @param values The data string of the matrix
+ * @param type The matrix data variable type
+ * @param data The data string of the matrix
  * @return struct COO The matrix representation
  */
-extern struct COO coo_format(int rows, int cols, char *values);
+extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data);
 
 /**
  * Allocates memory of a given size using malloc
@@ -59,22 +64,25 @@ void *allocate(size_t size);
 void *reallocate(void *ptr, size_t size);
 
 
-// Structure for the COO maxtrix representation
+// COO representation structs
 struct COO {
     int length;
+    enum mat_type type;
     struct ELEMENT {
-        int x; // The x coordinate
-        int y; // The y coordinate
-        int value; // Integer matrix value
-    } *elements;
-};
-
-struct COO_F {
-    int length;
-    struct ELEMENT_F {
         int x;
         int y;
-        float value; // Floating point matrix value
+        union { // Use of union to represent both int and float
+            int i;
+            float f;
+        } value;
     } *elements;
 };
 
+// CSR representation structs
+struct CSR {
+    int rows;
+    int count; // Number of nrz values
+    int *nrz; // List of non-zero values
+    int *ia; // Total number of elements up until specific row
+    int *ja; // List of column index for each nrz value
+};

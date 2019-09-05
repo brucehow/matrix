@@ -1,21 +1,19 @@
 #include "matrix.h"
 
-struct COO coo_format(int rows, int cols, char *data) {
+struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
     
     // Variable initialisation
     struct COO matrix; 
     matrix.elements = allocate(sizeof(struct ELEMENT));
     matrix.length = 0;
     int len, pos = 0;
-    char *val = NULL;
-    size_t size;
+    size_t size = MEMSIZ;
+    char *val = allocate(size);
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            size = MEMSIZ;
             len = 0;
-            val = allocate(size);
-            
+
             // Dynamic memory reallocation for each digit
             while (data[pos] != '\0' && data[pos] != ' ') {
                 val[len++] = data[pos++];
@@ -34,14 +32,21 @@ struct COO coo_format(int rows, int cols, char *data) {
                     exit(EXIT_FAILURE);
                 }
             }
-            // Zero value filter
-            int value = atoi(val);
-            if (value != 0) {
-                matrix.elements[matrix.length].value = value;
-                matrix.elements[matrix.length].x = i;
-                matrix.elements[matrix.length++].y = j;
+            if (type == INT) {
+                int value = atoi(val);
+                if (value != 0) {
+                    matrix.elements[matrix.length].value.i = value;
+                    matrix.elements[matrix.length].x = i;
+                    matrix.elements[matrix.length++].y = j;
+                }
+            } else {
+                float value = atof(val);
+                if (value != 0.0) {
+                    matrix.elements[matrix.length].value.f = value;
+                    matrix.elements[matrix.length].x = i;
+                    matrix.elements[matrix.length++].y = j;
+                }
             }
-            val = NULL;
         }
     }
     free(val);

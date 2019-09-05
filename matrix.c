@@ -13,58 +13,26 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
     
-    // Matrix type set
-    char *buffer = read_line(fp);
-    if (strcmp(buffer, "int") == 0) {
-        type = INT;
-    } else if (strcmp(buffer, "float") == 0) {
-        type = FLOAT;
-    } else {
-        fprintf(stderr, "Invalid matrix data type '%s'\n", buffer);
-        exit(EXIT_FAILURE);
-    }
-    free(buffer);
-    buffer = NULL;
-    
-    // Matrix rows and cols input validation
-    buffer = read_line(fp);
-    int len = strlen(buffer);
-    for (int i = 0; i < len; i++) {
-        if (!isdigit(buffer[i])) {
-            fprintf(stderr, "Invalid matrix row value '%s'\n", buffer);
-            exit(EXIT_FAILURE);
-        }
-    }
-    rows = atoi(buffer);
-    free(buffer);
-    buffer = NULL;
+    // Read input file
+    type = read_mat_type(fp);
+    rows = read_mat_dim(fp);
+    cols = read_mat_dim(fp);
+    data = read_line(fp);
 
-    buffer = read_line(fp);
-    len = strlen(buffer);
-    for (int i = 0; i < len; i++) {
-        if (!isdigit(buffer[i])) {
-            fprintf(stderr, "Invalid matrix column value '%s'\n", buffer);
-            exit(EXIT_FAILURE);
-        }
-    }
-    cols = atoi(buffer);
-    free(buffer);
-    buffer = NULL;
-
-    // Data parsing
-    data = read_line(fp); // free(data);
+    printf("%d, %d, %d, %s\n", rows, cols, type, data);
 
     // Matrix processing
-    struct COO matrix = coo_format(rows, cols, data);
+    struct COO matrix = coo_format(rows, cols, type, data);
 
-    /////////////////////////////////
+    /////////////// DEBUG //////////////////
     int limit = matrix.length;
     for (int i = 0; i < limit; i++) {
         printf("(%d,%d,%d) ", matrix.elements[i].x, matrix.elements[i].y, matrix.elements[i].value);
     }
     printf("\n");
-    /////////////////////////////////
+    /////////////// DEBUG //////////////////
 
+    free(data);
     exit(EXIT_SUCCESS);
 }
 
