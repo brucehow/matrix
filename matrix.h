@@ -19,7 +19,7 @@
 
 
 // Matrix type classifier
-enum mat_type {INT, FLOAT};
+enum mat_type {INT_MAT, FLOAT_MAT};
 
 /**
  * Read the current line of a given file pointer
@@ -46,6 +46,8 @@ extern int read_mat_dim(FILE *fp);
  */
 extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data);
 
+extern struct CSR csr_format(int rows, int cols, enum mat_type type, char *data);
+
 /**
  * Allocates memory of a given size using malloc
  * 
@@ -66,8 +68,8 @@ void *reallocate(void *ptr, size_t size);
 
 // COO representation structs
 struct COO {
-    int length;
     enum mat_type type;
+    int count;
     struct ELEMENT {
         int x;
         int y;
@@ -80,12 +82,13 @@ struct COO {
 
 // CSR representation structs
 struct CSR {
+    enum mat_type type;
     int rows;
     int count; // Number of nrz values
     union {
-        int i;
-        int f;
-    } *nrz; // List of non-zero values
+        int *i;
+        float *f;
+    } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific row
     int *ja; // List of column index for each nrz value
 };

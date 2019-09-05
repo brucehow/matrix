@@ -19,15 +19,22 @@ int main(int argc, char *argv[]) {
     cols = read_mat_dim(fp);
     data = read_line(fp);
 
-    printf("%d, %d, %d, %s\n", rows, cols, type, data);
-
     // Matrix processing
-    struct COO matrix = coo_format(rows, cols, type, data);
+    struct CSR matrix = csr_format(rows, cols, type, data);
 
     /////////////// DEBUG //////////////////
-    int limit = matrix.length;
+    int limit = matrix.count;
+    printf("Count=%d\nNNZ=", limit);
     for (int i = 0; i < limit; i++) {
-        printf("(%d,%d,%d) ", matrix.elements[i].x, matrix.elements[i].y, matrix.elements[i].value);
+        printf("%d,", matrix.nnz.i[i]);
+    }
+    printf("\nia=");
+    for (int i = 0; i < limit+1; i++) {
+        printf("%d,", matrix.ia[i]);
+    }
+    printf("\nja=");
+    for (int i = 0; i < limit; i++) {
+        printf("%d,", matrix.ja[i]);
     }
     printf("\n");
     /////////////// DEBUG //////////////////

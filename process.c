@@ -1,7 +1,7 @@
 #include "matrix.h"
 
 char *read_line(FILE *fp) {
-    size_t size = MEMSIZ;
+    size_t size = MEMSIZ * sizeof(char);
     char *buffer = allocate(size);
     char ch = fgetc(fp);
     int pos = 0;
@@ -24,9 +24,9 @@ enum mat_type read_mat_type(FILE *fp) {
     char* buffer = read_line(fp);
     enum mat_type type;
     if (strcmp(buffer, "int") == 0) {
-        type = INT;
+        type = INT_MAT;
     } else if (strcmp(buffer, "float") == 0) {
-        type = FLOAT;
+        type = FLOAT_MAT;
     } else {
         fprintf(stderr, "Invalid matrix data type '%s'\n", buffer);
         exit(EXIT_FAILURE);
