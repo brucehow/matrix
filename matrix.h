@@ -82,7 +82,10 @@ struct COO {
 struct CSR {
     int rows;
     int count; // Number of nrz values
-    int *nrz; // List of non-zero values
+    union {
+        int i;
+        int f;
+    } *nrz; // List of non-zero values
     int *ia; // Total number of elements up until specific row
     int *ja; // List of column index for each nrz value
 };
