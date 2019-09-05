@@ -32,9 +32,12 @@ struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
                     exit(EXIT_FAILURE);
                 }
             }
+            // Zero value filter
             if (type == INT) {
                 int value = atoi(val);
                 if (value != 0) {
+                    // Dynamically allocate memory for elements pointer
+                    matrix.elements = reallocate(matrix.elements, sizeof(struct ELEMENT) * (matrix.length+1));
                     matrix.elements[matrix.length].value.i = value;
                     matrix.elements[matrix.length].x = i;
                     matrix.elements[matrix.length++].y = j;
@@ -42,6 +45,7 @@ struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
             } else {
                 float value = atof(val);
                 if (value != 0.0) {
+                    matrix.elements = reallocate(matrix.elements, sizeof(struct ELEMENT) * (matrix.length+1));
                     matrix.elements[matrix.length].value.f = value;
                     matrix.elements[matrix.length].x = i;
                     matrix.elements[matrix.length++].y = j;
