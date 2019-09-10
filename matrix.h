@@ -45,8 +45,26 @@ extern int read_mat_dim(FILE *fp);
  */
 extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data);
 
+/**
+ * Represents a given matrix using the Compressed Sparse Row Format 
+ * 
+ * @param rows Number of rows in the matrix
+ * @param cols Number of columns in the matrix
+ * @param type The matrix data variable type
+ * @param data The data string of the matrix
+ * @return struct CSR The matrix representation
+ */
 extern struct CSR csr_format(int rows, int cols, enum mat_type type, char *data);
 
+/**
+ * Represents a given matrix using the Compressed Sparse Column Format 
+ * 
+ * @param rows Number of rows in the matrix
+ * @param cols Number of columns in the matrix
+ * @param type The matrix data variable type
+ * @param data The data string of the matrix
+ * @return struct CSC The matrix representation
+ */
 extern struct CSC csc_format(int rows, int cols, enum mat_type type, char *data);
 
 /**

@@ -150,6 +150,9 @@ struct CSR csr_format(int rows, int cols, enum mat_type type, char *data) {
         }
         matrix.ia[i+1] = matrix.count;
     }
+
+    free(val);
+    val = NULL;
     return matrix;
 }
 
@@ -244,5 +247,8 @@ struct CSC csc_format(int rows, int cols, enum mat_type type, char *data) {
         }
         matrix.ia[i+1] = matrix.count;
     }
+
+    free(val);
+    val = NULL;
     return matrix;
 }
