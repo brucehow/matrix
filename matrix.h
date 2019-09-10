@@ -17,7 +17,6 @@
 
 #define MEMSIZ 8
 
-
 // Matrix type classifier
 enum mat_type {INT_MAT, FLOAT_MAT};
 
@@ -48,6 +47,8 @@ extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data)
 
 extern struct CSR csr_format(int rows, int cols, enum mat_type type, char *data);
 
+extern struct CSC csc_format(int rows, int cols, enum mat_type type, char *data);
+
 /**
  * Allocates memory of a given size using malloc
  * 
@@ -66,7 +67,7 @@ void *allocate(size_t size);
 void *reallocate(void *ptr, size_t size);
 
 
-// COO representation structs
+// COO representation
 struct COO {
     enum mat_type type;
     int count;
@@ -80,15 +81,28 @@ struct COO {
     } *elements;
 };
 
-// CSR representation structs
+// CSR representation
 struct CSR {
     enum mat_type type;
-    int rows;
-    int count; // Number of nrz values
+    int rows; // Used for IA length + 1
+    int count; // Number of nnz values
     union {
         int *i;
         float *f;
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific row
-    int *ja; // List of column index for each nrz value
+    int *ja; // List of column index for each nnz value
+};
+
+// CSC representation
+struct CSC {
+    enum mat_type type;
+    int cols; // Used for IA length + 1
+    int count; // Number of nnz values
+    union {
+        int *i;
+        float *f;
+    } nnz; // List of non-zero values
+    int *ia; // Total number of elements up until specific col
+    int *ja; // List of row index for each nnz value
 };

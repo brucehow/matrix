@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     data = read_line(fp);
 
     // Matrix processing
-    struct CSR matrix = csr_format(rows, cols, type, data);
+    struct CSC matrix = csc_format(rows, cols, type, data);
 
     /////////////// DEBUG //////////////////
     int limit = matrix.count;
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
         printf("%d,", matrix.nnz.i[i]);
     }
     printf("\nia=");
-    for (int i = 0; i < limit+1; i++) {
+    for (int i = 0; i < cols+1; i++) {
         printf("%d,", matrix.ia[i]);
     }
     printf("\nja=");

@@ -152,3 +152,97 @@ struct CSR csr_format(int rows, int cols, enum mat_type type, char *data) {
     }
     return matrix;
 }
+
+struct CSC csc_format(int rows, int cols, enum mat_type type, char *data) {
+    // Structure variable initialisation
+    struct CSC matrix;
+    size_t nnz_size;
+    size_t ja_size = MEMSIZ * sizeof(int);
+    if (type == INT_MAT) {
+        nnz_size = MEMSIZ * sizeof(int);
+        matrix.nnz.i = allocate(nnz_size);
+    }  else {
+        nnz_size = MEMSIZ * sizeof(float);
+        matrix.nnz.f = allocate(nnz_size);
+    }
+    matrix.ja = allocate(ja_size);
+    matrix.ia = allocate(sizeof(int) * (rows+1));
+    matrix.ia[0] = 0; // Conventional
+    matrix.cols = cols;
+    matrix.count = 0;
+
+    // Data reading variables
+    int len, pos = 0;
+    int skip = 0; // Use to read data column down
+    size_t size = MEMSIZ;
+    char *val = allocate(size);
+
+    for (int i = 0; i < cols; i++) {
+        // Figure out where to start col wise
+        skip = 0;
+        pos = 0;
+        while (skip != i) {
+            if (data[pos] == ' ') {
+                    skip++;
+                }
+                pos++;
+        }
+        skip = 0;
+        for (int j = 0; j < rows; j++) {
+            len = 0; // Reset word length to 0
+
+            while (data[pos] != '\0' && data[pos] != ' ') {
+                val[len++] = data[pos++];
+
+                // Dynamic memory reallocation for each digit
+                if ((len * sizeof(char)) == size) {
+                    if (data[pos] != '\0' && data[pos] != ' ') {
+                        size += sizeof(char); // Null byte
+                    } else {
+                        size *= 2;
+                    }
+                    val = reallocate(val, size);
+                }
+            }
+            val[len] = '\0';
+            while (data[pos] != '\0' && skip != cols) { // Iterate column 
+                if (data[pos] == ' ') {
+                    skip++;
+                }
+                pos++;
+            }
+            skip = 0;
+            check_numeric(val);
+
+            // Zero value filter
+            if (type == INT_MAT) {
+                int value = atoi(val);
+                if (value != 0) {
+                    // Dynamically allocate memory for nnz and ja pointers
+                    if ((matrix.count * sizeof(int)) == ja_size) {
+                        nnz_size *= 2;
+                        ja_size *= 2;
+                        matrix.nnz.i = reallocate(matrix.nnz.i, nnz_size);
+                        matrix.ja = reallocate(matrix.ja, ja_size);
+                    }
+                    matrix.nnz.i[matrix.count] = value;
+                    matrix.ja[matrix.count++] = j;
+                }
+            } else {
+                float value = atof(val);
+                if (value != 0.0) {
+                    if ((matrix.count * sizeof(int)) == ja_size) {
+                        nnz_size *= 2;
+                        ja_size *= 2;
+                        matrix.nnz.f = reallocate(matrix.nnz.f, nnz_size);
+                        matrix.ja = reallocate(matrix.ja, ja_size);
+                    }
+                    matrix.nnz.f[matrix.count] = value;
+                    matrix.ja[matrix.count++] = j;
+                }
+            }  
+        }
+        matrix.ia[i+1] = matrix.count;
+    }
+    return matrix;
+}
