@@ -1,5 +1,6 @@
 # Sample datafiles
 *.in
+*.out
 
 # Compiled files
 matrix
