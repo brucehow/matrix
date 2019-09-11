@@ -1,16 +1,6 @@
 #include "matrix.h"
 
-void check_numeric(char *val) {
-    int len = strlen(val);
-    for (int i = 0; i < len; i++) {
-        if (!isdigit(val[i])) {
-            fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
-            exit(EXIT_FAILURE);
-        }
-    }
-}
-
-struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
+struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     // Structure variable initialisation
     struct COO matrix;
     size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
@@ -41,11 +31,14 @@ struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
             }
             val[len] = '\0';
             pos++; // Move away from separating char
-            check_numeric(val);
-            
+
             // Zero value filter
-            if (type == INT_MAT) {
-                int value = atoi(val);
+            if (type == TYPE_INT) {
+                int value = strtoimax(val, NULL, 10);
+                    if (errno == EINVAL) {
+                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                        exit(EXIT_FAILURE);
+                }
                 if (value != 0) {
                     // Dynamically allocate memory for elements struct pointer
                     if (((matrix.count) * sizeof(struct ELEMENT)) == elements_size) {
@@ -76,12 +69,12 @@ struct COO coo_format(int rows, int cols, enum mat_type type, char *data) {
     return matrix;
 }
 
-struct CSR csr_format(int rows, int cols, enum mat_type type, char *data) {
+struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     // Structure variable initialisation
     struct CSR matrix;
     size_t nnz_size;
     size_t ja_size = MEMSIZ * sizeof(int);
-    if (type == INT_MAT) {
+    if (type == TYPE_INT) {
         nnz_size = MEMSIZ * sizeof(int);
         matrix.nnz.i = allocate(nnz_size);
     }  else {
@@ -118,11 +111,14 @@ struct CSR csr_format(int rows, int cols, enum mat_type type, char *data) {
             }
             val[len] = '\0';
             pos++; // Move away from separating char
-            check_numeric(val);
 
             // Zero value filter
-            if (type == INT_MAT) {
-                int value = atoi(val);
+            if (type == TYPE_INT) {
+                int value = strtoimax(val, NULL, 10);
+                    if (errno == EINVAL) {
+                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                        exit(EXIT_FAILURE);
+                }
                 if (value != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
@@ -156,12 +152,12 @@ struct CSR csr_format(int rows, int cols, enum mat_type type, char *data) {
     return matrix;
 }
 
-struct CSC csc_format(int rows, int cols, enum mat_type type, char *data) {
+struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     // Structure variable initialisation
     struct CSC matrix;
     size_t nnz_size;
     size_t ja_size = MEMSIZ * sizeof(int);
-    if (type == INT_MAT) {
+    if (type == TYPE_INT) {
         nnz_size = MEMSIZ * sizeof(int);
         matrix.nnz.i = allocate(nnz_size);
     }  else {
@@ -215,11 +211,14 @@ struct CSC csc_format(int rows, int cols, enum mat_type type, char *data) {
                 pos++;
             }
             skip = 0;
-            check_numeric(val);
 
             // Zero value filter
-            if (type == INT_MAT) {
-                int value = atoi(val);
+            if (type == TYPE_INT) {
+                int value = strtoimax(val, NULL, 10);
+                    if (errno == EINVAL) {
+                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                        exit(EXIT_FAILURE);
+                }
                 if (value != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {

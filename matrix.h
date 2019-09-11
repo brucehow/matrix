@@ -12,13 +12,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <omp.h>
+#include <errno.h>
 #include <time.h>
+#include <inttypes.h>
+#include <omp.h>
 
 #define MEMSIZ 8
 
+// Macros for debug
+#define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
+#define pstr(x) printf("%s = %s\n", #x, x); fflush(stdout);
+#define p() printf("here\n");fflush(stdout);
+
 // Matrix type classifier
-enum mat_type {INT_MAT, FLOAT_MAT};
+enum VAR_TYPE {TYPE_INT, TYPE_FLOAT, INVALID};
+enum ROUTINE_TYPE {SM, TR, AD, TS, MM, UNDEF};
 
 /**
  * Read the current line of a given file pointer
@@ -30,9 +38,11 @@ enum mat_type {INT_MAT, FLOAT_MAT};
  */
 extern char *read_line(FILE *fp);
 
-extern enum mat_type read_mat_type(FILE *fp);
+extern enum VAR_TYPE read_mat_type(FILE *fp);
 
 extern int read_mat_dim(FILE *fp);
+
+extern enum VAR_TYPE numeric_type(char *val);
 
 /**
  * Represents a given matrix using the Coordinate Format 
@@ -43,7 +53,7 @@ extern int read_mat_dim(FILE *fp);
  * @param data The data string of the matrix
  * @return struct COO The matrix representation
  */
-extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data);
+extern struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data);
 
 /**
  * Represents a given matrix using the Compressed Sparse Row Format 
@@ -54,7 +64,7 @@ extern struct COO coo_format(int rows, int cols, enum mat_type type, char *data)
  * @param data The data string of the matrix
  * @return struct CSR The matrix representation
  */
-extern struct CSR csr_format(int rows, int cols, enum mat_type type, char *data);
+extern struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data);
 
 /**
  * Represents a given matrix using the Compressed Sparse Column Format 
@@ -65,7 +75,7 @@ extern struct CSR csr_format(int rows, int cols, enum mat_type type, char *data)
  * @param data The data string of the matrix
  * @return struct CSC The matrix representation
  */
-extern struct CSC csc_format(int rows, int cols, enum mat_type type, char *data);
+extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data);
 
 /**
  * Allocates memory of a given size using malloc
@@ -87,7 +97,7 @@ void *reallocate(void *ptr, size_t size);
 
 // COO representation
 struct COO {
-    enum mat_type type;
+    enum VAR_TYPE type;
     int count;
     struct ELEMENT {
         int x;
@@ -101,7 +111,7 @@ struct COO {
 
 // CSR representation
 struct CSR {
-    enum mat_type type;
+    enum VAR_TYPE type;
     int rows; // Used for IA length + 1
     int count; // Number of nnz values
     union {
@@ -114,7 +124,7 @@ struct CSR {
 
 // CSC representation
 struct CSC {
-    enum mat_type type;
+    enum VAR_TYPE type;
     int cols; // Used for IA length + 1
     int count; // Number of nnz values
     union {
@@ -123,4 +133,13 @@ struct CSC {
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific col
     int *ja; // List of row index for each nnz value
+};
+
+// Routine representation
+struct ROUTINE {
+    enum ROUTINE_TYPE type;
+    union {
+        int i;
+        float f;
+    } param; // Used to store parameter required routines
 };

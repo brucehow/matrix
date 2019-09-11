@@ -20,13 +20,13 @@ char *read_line(FILE *fp) {
     return buffer;
 }
 
-enum mat_type read_mat_type(FILE *fp) {
+enum VAR_TYPE read_mat_type(FILE *fp) {
     char* buffer = read_line(fp);
-    enum mat_type type;
+    enum VAR_TYPE type;
     if (strcmp(buffer, "int") == 0) {
-        type = INT_MAT;
+        type = TYPE_INT;
     } else if (strcmp(buffer, "float") == 0) {
-        type = FLOAT_MAT;
+        type = TYPE_FLOAT;
     } else {
         fprintf(stderr, "Invalid matrix data type '%s'\n", buffer);
         exit(EXIT_FAILURE);
@@ -49,4 +49,20 @@ int read_mat_dim(FILE *fp) {
     free(buffer);
     buffer = NULL;
     return dim;
+}
+
+enum VAR_TYPE numeric_type(char *val) {
+    int len = strlen(val);
+    bool decimal = false; // Ensure we only see 1 decimal if float value
+    for (int i = 0; i < len; i++) {
+        if (isdigit(val[i])) {
+            continue;
+        } else if (val[i] == '.' && !decimal) {
+            decimal = true;
+            continue;
+        } else {
+            return INVALID;
+        }
+    }
+    return decimal ? TYPE_FLOAT : TYPE_INT;
 }
