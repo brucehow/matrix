@@ -123,10 +123,16 @@ void *allocate(size_t size);
  */
 void *reallocate(void *ptr, size_t size);
 
+extern void write_coo_data(FILE *fp, struct COO matrix);
+
+extern void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type);
+
 // COO representation
 struct COO {
     enum VAR_TYPE type;
-    int count;
+    int rows;
+    int cols;
+    int count; // Number of cordinate entries
     struct ELEMENT {
         int x;
         int y;
@@ -141,26 +147,28 @@ struct COO {
 struct CSR {
     enum VAR_TYPE type;
     int rows; // Used for IA length + 1
-    int count; // Number of nnz values
+    int cols;
+    int count; // Number of NNZ values
     union {
         int *i;
         float *f;
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific row
-    int *ja; // List of column index for each nnz value
+    int *ja; // List of column index for each NNZ value
 };
 
 // CSC representation
 struct CSC {
     enum VAR_TYPE type;
+    int rows;
     int cols; // Used for IA length + 1
-    int count; // Number of nnz values
+    int count; // Number of NNZ values
     union {
         int *i;
         float *f;
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific col
-    int *ja; // List of row index for each nnz value
+    int *ja; // List of row index for each NNZ value
 };
 
 // Routine representation

@@ -159,10 +159,6 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-    if (filename2 == NULL) {
-        filename2 = NULL;
-    }
-
     switch (routine.type) {
         case SM:
             // Read input file
@@ -176,18 +172,13 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: float scalar cannot be provided to an integer matrix\n");
                     exit(EXIT_FAILURE);
                 }
-                // DEBUG PRINT
-                int len = matrix.count;
-                for (int i = 0; i < len; i++) {
-                    printf("%d ", matrix.elements[i].value.i);
-                }
                 scalar_multiply(matrix, routine.param.i);
-                printf("\n");
-                // DEBUG PRINT
-                for (int i = 0; i < len; i++) {
-                    printf("%d ", matrix.elements[i].value.i);
-                }
-                printf("\n");
+
+                // test file
+                FILE *output = fopen("sample.out", "w");
+                write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
+                write_coo_data(output, matrix);
+                fclose(output);
             } else {
                 //scalar_multiplyf(matrix, routine.param.f);
             }

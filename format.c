@@ -5,6 +5,8 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     struct COO matrix;
     size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
     matrix.elements = allocate(elements_size);
+    matrix.rows = rows;
+    matrix.cols = cols;
     matrix.type = type;
     matrix.count = 0;
     
@@ -86,12 +88,13 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.ia = allocate(sizeof(int) * (rows+1));
     matrix.ia[0] = 0; // Conventional
     matrix.rows = rows;
+    matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
 
     // Data reading variables
     int len, pos = 0;
-    size_t size = MEMSIZ;
+    size_t size = MEMSIZ * sizeof(char);
     char *val = allocate(size);
 
     for (int i = 0; i < rows; i++) {
@@ -169,6 +172,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.ja = allocate(ja_size);
     matrix.ia = allocate(sizeof(int) * (rows+1));
     matrix.ia[0] = 0; // Conventional
+    matrix.rows = rows;
     matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
@@ -176,7 +180,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     // Data reading variables
     int len, pos = 0;
     int skip = 0; // Use to read data column down
-    size_t size = MEMSIZ;
+    size_t size = MEMSIZ * sizeof(char);
     char *val = allocate(size);
 
     for (int i = 0; i < cols; i++) {

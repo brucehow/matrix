@@ -11,3 +11,15 @@ void scalar_multiply(struct COO matrix, int scalar) {
         }
     }
 }
+
+void trace(struct COO matrix) {
+
+}
+
+void transpose(struct COO matrix) {
+
+}
+
+void matrix_multiply(struct COO matrix) {
+    
+}
