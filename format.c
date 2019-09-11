@@ -5,6 +5,7 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     struct COO matrix;
     size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
     matrix.elements = allocate(elements_size);
+    matrix.type = type;
     matrix.count = 0;
     
     // Data reading variables
@@ -86,6 +87,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.ia[0] = 0; // Conventional
     matrix.rows = rows;
     matrix.count = 0;
+    matrix.type = type;
 
     // Data reading variables
     int len, pos = 0;
@@ -116,7 +118,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
             if (type == TYPE_INT) {
                 int value = strtoimax(val, NULL, 10);
                     if (errno == EINVAL) {
-                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                        fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
                         exit(EXIT_FAILURE);
                 }
                 if (value != 0) {
@@ -169,6 +171,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.ia[0] = 0; // Conventional
     matrix.cols = cols;
     matrix.count = 0;
+    matrix.type = type;
 
     // Data reading variables
     int len, pos = 0;
@@ -216,7 +219,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
             if (type == TYPE_INT) {
                 int value = strtoimax(val, NULL, 10);
                     if (errno == EINVAL) {
-                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                        fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
                         exit(EXIT_FAILURE);
                 }
                 if (value != 0) {

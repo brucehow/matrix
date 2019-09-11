@@ -19,10 +19,10 @@
 
 #define MEMSIZ 8
 
-// Macros for debug
+// DEBUG MACROS
 #define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
 #define pstr(x) printf("%s = %s\n", #x, x); fflush(stdout);
-#define p() printf("here\n");fflush(stdout);
+#define p() printf("HERE\n");fflush(stdout);
 
 // Matrix type classifier
 enum VAR_TYPE {TYPE_INT, TYPE_FLOAT, INVALID};
@@ -38,10 +38,30 @@ enum ROUTINE_TYPE {SM, TR, AD, TS, MM, UNDEF};
  */
 extern char *read_line(FILE *fp);
 
+/**
+ * Read the current line of a given file pointer
+ * and determine the appropriate matrix data type
+ * 
+ * @param fp The file pointer of the input file
+ * @return enum VAR_TYPE The data type of the matrix
+ */
 extern enum VAR_TYPE read_mat_type(FILE *fp);
 
+/**
+ * Read the current line of the given file pointer
+ * and determine the matrix dimension
+ *
+ * @param fp The file pointer of the input file
+ * @return int The matrix dimension, row/col value
+ */
 extern int read_mat_dim(FILE *fp);
 
+/**
+ * Determine the numeric data type of a given string
+ * 
+ * @param val The string to determine the data type for
+ * @return enum VAR_TYPE The numeric data type
+ */
 extern enum VAR_TYPE numeric_type(char *val);
 
 /**
@@ -78,6 +98,15 @@ extern struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data)
 extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data);
 
 /**
+ * Performs scalar multiplication on the given matrix and the
+ * given parameter (scalar value)
+ *
+ * @param matrix The matrix to perform the algebraic routine on
+ * @param scalar The scalar value to multiply by
+ */
+extern void scalar_multiply(struct COO matrix, int scalar);
+
+/**
  * Allocates memory of a given size using malloc
  * 
  * @param size Size of the memory allocation
@@ -93,7 +122,6 @@ void *allocate(size_t size);
  * @return void* A pointer to the newly reallocated memory
  */
 void *reallocate(void *ptr, size_t size);
-
 
 // COO representation
 struct COO {
@@ -138,6 +166,7 @@ struct CSC {
 // Routine representation
 struct ROUTINE {
     enum ROUTINE_TYPE type;
+    enum VAR_TYPE union_type;
     union {
         int i;
         float f;
