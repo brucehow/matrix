@@ -136,6 +136,8 @@ void *reallocate(void *ptr, size_t size);
  */
 extern char *get_output_name(struct tm tm, char *routine);
 
+extern void write_times(FILE *fp, float load_time, float routine_time);
+
 extern void write_coo_data(FILE *fp, struct COO matrix);
 
 extern void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type);

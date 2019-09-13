@@ -12,8 +12,8 @@ DEPENDENCIES = matrix.c format.c memory.c process.c routines.c output.c
 
 all: $(DEPENDENCIES)
 	@$(GCC) -o $(PROGNAME) $(DEPENDENCIES)
-	@echo "make: 'matrix' successfully built."
+	@echo "make: '$(PROGNAME)' successfully built."
 
 clean: $(DEPENDENCIES)
 	@rm $(PROGNAME)
-	@echo "make: 'matrix' has been removed."
+	@echo "make: '$(PROGNAME)' has been removed."

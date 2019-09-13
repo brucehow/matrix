@@ -16,6 +16,10 @@ char *get_output_name(struct tm tm, char *routine) {
     return output;
 }
 
+void write_times(FILE *fp, float load_time, float routine_time) {
+    fprintf(fp, "%f\n%f\n", load_time, routine_time);
+}
+
 void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type) {
     switch (routine) {
         case SM:

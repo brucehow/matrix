@@ -10,7 +10,7 @@ void usage(char *err) {
                 "  --mm\t\tperform matrix multiplication on two matrices, matrix2 must be specified\n"
                 "options:\n"
                 "  -t threads\tspecify the number of execution threads to use\n"
-                "  -l log\tspecify the log file to output results to\n";
+                "  -l\t\tif present, results will be logged to an output file\n";
     if (err != NULL) {
         fprintf(stderr, "matrix: %s", err);
     }
@@ -149,17 +149,26 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Timing variables
+    clock_t start, end;
+
     switch (routine.type) {
         case SM:
             // Read input file
+            start = clock();
             type = read_mat_type(fp);
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
             struct COO matrix = coo_format(rows, cols, type, data);
+            end = clock();
+            float load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
 
             // Perform the scalar multiplication routine
+            start = clock();
             scalar_multiply(matrix, routine.scalar);
+            end = clock();
+            float routine_time = (double) (end - start) / CLOCKS_PER_SEC;
             matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
 
             if (log) {
@@ -171,12 +180,14 @@ int main(int argc, char *argv[]) {
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
                 write_coo_data(output, matrix);
-                printf("matrix: successfully generated output to '%s'\n", output_file);
+                write_times(output, load_time, routine_time);
+                printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, matrix.type);
                 write_coo_data(stdout, matrix);
+                write_times(stdout, load_time, routine_time);
             }
             break;
         case TR:
