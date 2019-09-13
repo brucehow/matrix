@@ -102,9 +102,9 @@ extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data)
  * given parameter (scalar value)
  *
  * @param matrix The matrix to perform the algebraic routine on
- * @param scalar The scalar value to multiply by
+ * @param scalar The int scalar value to multiply by
  */
-extern void scalar_multiply(struct COO matrix, int scalar);
+extern void scalar_multiply(struct COO matrix, float scalar);
 
 /**
  * Allocates memory of a given size using malloc
@@ -174,9 +174,5 @@ struct CSC {
 // Routine representation
 struct ROUTINE {
     enum ROUTINE_TYPE type;
-    enum VAR_TYPE union_type;
-    union {
-        int i;
-        float f;
-    } param; // Used to store parameter required routines
+    float scalar; // If SM is used
 };

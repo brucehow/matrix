@@ -21,12 +21,11 @@ int main(int argc, char *argv[]) {
     enum VAR_TYPE type = INVALID;
     struct ROUTINE routine;
     routine.type = UNDEF;
-    routine.union_type = UNDEF;
     int rows, cols;
     char *data = NULL;
     char *filename = NULL;
     char *filename2 = NULL;
-    char *logfile = NULL;
+    bool log = false;
     int arg = 1; // Argument pointer
 
     // Argument processing
@@ -42,34 +41,18 @@ int main(int argc, char *argv[]) {
             } else if ((arg + 1) == argc) { // Expect scalar value
                 usage("no scalar value supplied when using --sm\n");
                 exit(EXIT_FAILURE);
-            } 
+            }
+            routine.type = SM;
             arg++;
             type = numeric_type(argv[arg]); // Check scalar input type
             if (type == INVALID) {
                 usage("scalar value must be numeric\n");
                 exit(EXIT_FAILURE);
             } else {
-                routine.type = SM;
-                switch (type) {
-                    case TYPE_INT:
-                        routine.union_type = TYPE_INT;
-                        routine.param.i = strtoimax(argv[arg], NULL, 10);
-                        if (errno == EINVAL || errno == ERANGE) {
-                            fprintf(stderr, "matrix: failed to convert scalar value '%s' to int\n", argv[arg]);
-                            exit(EXIT_FAILURE);
-                        }
-                        break;
-                    case TYPE_FLOAT:
-                        routine.union_type = TYPE_FLOAT;
-                        routine.param.f = strtof(argv[arg], NULL);
-                        if (errno == ERANGE) {
-                            fprintf(stderr, "matrix: failed to convert scalar value '%s' to float\n", argv[arg]);
-                            exit(EXIT_FAILURE);
-                        }
-                        break;
-                    case INVALID: // Should not get here
-                        fprintf(stderr, "matrix: unable to determine scalar value data type '%s'\n", argv[arg]);
-                        exit(EXIT_FAILURE);
+                routine.scalar = strtof(argv[arg], NULL);
+                if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to float\n", argv[arg]);
+                    exit(EXIT_FAILURE);
                 }
             }
         } else if (strcmp(argv[arg], "--tr") == 0) {
@@ -111,15 +94,11 @@ int main(int argc, char *argv[]) {
                 // TODO: NEED TO CHECK FOR MULTIPLE -T PARAM
             }
         } else if (strcmp(argv[arg], "-l") == 0) {
-            if (logfile != NULL) { // Logfile already specified
+            if (log) { // Logfile already specified
                 usage("log parameter should only be used once\n");
                 exit(EXIT_FAILURE);
-            } else if ((arg + 1) == argc) { // Expect log file
-                usage("log file must be specified when using -l\n");
-                exit(EXIT_FAILURE);
             } else {
-                arg++;
-                logfile = argv[arg];
+                log = false;
             }
         } else if (strcmp(argv[arg], "-f") == 0) {
             if (filename != NULL) { // File already specified
@@ -167,21 +146,14 @@ int main(int argc, char *argv[]) {
             cols = read_mat_dim(fp);
             data = read_line(fp);
             struct COO matrix = coo_format(rows, cols, type, data);
-            if (matrix.type == TYPE_INT) {
-                if (routine.union_type == TYPE_FLOAT) { // Float scalar on int matrix
-                    fprintf(stderr, "matrix: float scalar cannot be provided to an integer matrix\n");
-                    exit(EXIT_FAILURE);
-                }
-                scalar_multiply(matrix, routine.param.i);
 
-                // test file
-                FILE *output = fopen("sample.out", "w");
-                write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
-                write_coo_data(output, matrix);
-                fclose(output);
-            } else {
-                //scalar_multiplyf(matrix, routine.param.f);
-            }
+            // Perform the scalar multiplication routine
+            scalar_multiply(matrix, routine.scalar);
+            matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
+            FILE *output = fopen("sample.out", "w"); // sample file
+            write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
+            write_coo_data(output, matrix);
+            fclose(output);
             break;
         case TR:
             break;
