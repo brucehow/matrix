@@ -126,6 +126,14 @@ void *allocate(size_t size);
  */
 void *reallocate(void *ptr, size_t size);
 
+/**
+ * Get the output name for the output file given the current
+ * date and time 
+ *
+ * @param tm The date time struct
+ * @param routine The routine type
+ * @return char* The name of the output file
+ */
 extern char *get_output_name(struct tm tm, char *routine);
 
 extern void write_coo_data(FILE *fp, struct COO matrix);

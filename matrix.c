@@ -18,6 +18,7 @@ void usage(char *err) {
 }
 
 int main(int argc, char *argv[]) {
+    // CLA variables
     enum VAR_TYPE type = INVALID;
     struct ROUTINE routine;
     routine.type = UNDEF;
@@ -30,7 +31,7 @@ int main(int argc, char *argv[]) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
 
-    // Argument processing
+    // CLA processing
     if (argc < 4) {
         usage("invalid number of arguments supplied\n");
         exit(EXIT_FAILURE);
@@ -147,6 +148,7 @@ int main(int argc, char *argv[]) {
         usage("only one matrix input file is required with routine\n");
         exit(EXIT_FAILURE);
     }
+    fclose(fp);
 
     switch (routine.type) {
         case SM:
@@ -162,7 +164,8 @@ int main(int argc, char *argv[]) {
             matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
 
             if (log) {
-                FILE *output = fopen(get_output_name(tm, "sm"), "w"); // sample file
+                char *output_file = get_output_name(tm, "sm");
+                FILE *output = fopen(output_file, "w"); // sample file
                 if(output == NULL) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
@@ -170,6 +173,7 @@ int main(int argc, char *argv[]) {
                 write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
                 write_coo_data(output, matrix);
                 fclose(output);
+                free(output_file);
             }
             break;
         case TR:
@@ -184,7 +188,6 @@ int main(int argc, char *argv[]) {
             usage("no matrix algebra routine specified\n");
             exit(EXIT_FAILURE);
     }
-    fclose(fp);
     free(data);
     exit(EXIT_SUCCESS);
 }
