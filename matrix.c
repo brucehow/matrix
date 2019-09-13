@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
         usage("only one matrix input file is required with routine\n");
         exit(EXIT_FAILURE);
     }
-    fclose(fp);
 
     switch (routine.type) {
         case SM:
@@ -172,8 +171,12 @@ int main(int argc, char *argv[]) {
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
                 write_coo_data(output, matrix);
+                printf("matrix: successfully generated output to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
+            } else {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, matrix.type);
+                write_coo_data(stdout, matrix);
             }
             break;
         case TR:
@@ -188,6 +191,7 @@ int main(int argc, char *argv[]) {
             usage("no matrix algebra routine specified\n");
             exit(EXIT_FAILURE);
     }
+    fclose(fp);
     free(data);
     exit(EXIT_SUCCESS);
 }
