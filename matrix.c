@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     char *filename2 = NULL;
     bool log = false;
     int arg = 1; // Argument pointer
+    int threads = -1;
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
 
@@ -92,9 +93,19 @@ int main(int argc, char *argv[]) {
             if (type != TYPE_INT) {
                 usage("invalid number of execution threads\n");
                 exit(EXIT_FAILURE);
-            }  else {
-                continue; // TODO: CONVERT TO INT AND ASSIGN TO OMP NUM OF THREADS
-                // TODO: NEED TO CHECK FOR MULTIPLE -T PARAM
+            }  else if (threads != -1) {
+                usage("thread parameter should only be used once\n");
+                exit(EXIT_FAILURE);
+            }
+            threads = strtoimax(argv[arg], NULL, 10);
+            if (errno == EINVAL) {
+                fprintf(stderr, "matrix: error processing thread value '%s'\n", argv[arg]);
+                exit(EXIT_FAILURE);
+            } else if (threads <= 0) {
+                usage("number of exeuction threads must be greater than 0\n");
+                exit(EXIT_FAILURE);
+            } else {
+                omp_set_num_threads(threads);
             }
         } else if (strcmp(argv[arg], "-l") == 0) {
             if (log) { // Logfile already specified
@@ -144,7 +155,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "%s: no such file\n", filename);
 		exit(EXIT_FAILURE);
 	}
-    if (filename2 != NULL && routine.type != MM) {
+    if (filename2 != NULL && routine.type != MM && routine.type != AD) {
         usage("only one matrix input file is required with routine\n");
         exit(EXIT_FAILURE);
     }

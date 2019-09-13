@@ -47,7 +47,7 @@ void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols
     if (filename2 != NULL) {
         fprintf(fp, "%s\n", filename2);
     }
-    fprintf(fp, "%d\n", omp_get_thread_num());
+    fprintf(fp, "%d\n", omp_get_max_threads());
     switch (type) {
         case TYPE_INT:
             fprintf(fp, "int\n");
