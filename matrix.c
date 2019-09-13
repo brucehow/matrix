@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
     char *filename2 = NULL;
     bool log = false;
     int arg = 1; // Argument pointer
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
 
     // Argument processing
     if (argc < 4) {
@@ -98,7 +100,7 @@ int main(int argc, char *argv[]) {
                 usage("log parameter should only be used once\n");
                 exit(EXIT_FAILURE);
             } else {
-                log = false;
+                log = true;
             }
         } else if (strcmp(argv[arg], "-f") == 0) {
             if (filename != NULL) { // File already specified
@@ -123,6 +125,10 @@ int main(int argc, char *argv[]) {
                     filename2 = argv[arg];
                 }
             }
+        } else {
+            fprintf(stderr, "matrix: unknown parameter '%s'\n", argv[arg]);
+            usage(NULL);
+            exit(EXIT_FAILURE);
         }
         arg++;
     }
@@ -133,10 +139,14 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     FILE *fp = fopen(filename, "r");
-    if(fp == NULL) {
+    if (fp == NULL) {
         fprintf(stderr, "%s: no such file\n", filename);
 		exit(EXIT_FAILURE);
 	}
+    if (filename2 != NULL && routine.type != MM) {
+        usage("only one matrix input file is required with routine\n");
+        exit(EXIT_FAILURE);
+    }
 
     switch (routine.type) {
         case SM:
@@ -150,10 +160,17 @@ int main(int argc, char *argv[]) {
             // Perform the scalar multiplication routine
             scalar_multiply(matrix, routine.scalar);
             matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
-            FILE *output = fopen("sample.out", "w"); // sample file
-            write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
-            write_coo_data(output, matrix);
-            fclose(output);
+
+            if (log) {
+                FILE *output = fopen(get_output_name(tm, "sm"), "w"); // sample file
+                if(output == NULL) {
+                    fprintf(stderr, "matrix: failed to generate output file\n");
+                    exit(EXIT_FAILURE);
+                }
+                write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
+                write_coo_data(output, matrix);
+                fclose(output);
+            }
             break;
         case TR:
             break;

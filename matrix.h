@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
@@ -18,6 +17,10 @@
 #include <omp.h>
 
 #define MEMSIZ 8
+
+// Output const
+#define OUTPUT_NAME_SIZE 31
+#define SID 22242664
 
 // DEBUG MACROS
 #define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
@@ -122,6 +125,8 @@ void *allocate(size_t size);
  * @return void* A pointer to the newly reallocated memory
  */
 void *reallocate(void *ptr, size_t size);
+
+extern char *get_output_name(struct tm tm, char *routine);
 
 extern void write_coo_data(FILE *fp, struct COO matrix);
 

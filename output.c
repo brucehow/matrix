@@ -9,6 +9,13 @@ int filename_start(char *filename, int len) {
     return 0;
 }
 
+char *get_output_name(struct tm tm, char *routine) {
+    char *output = allocate(OUTPUT_NAME_SIZE * sizeof(char));
+    snprintf(output, OUTPUT_NAME_SIZE, "%d_%d%02d%d_%d%d_%s.out", SID, tm.tm_mday, tm.tm_mon + 3, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, routine);
+    output[OUTPUT_NAME_SIZE] = '\0';
+    return output;
+}
+
 void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type) {
     switch (routine) {
         case SM:
