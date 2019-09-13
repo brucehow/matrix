@@ -70,6 +70,7 @@ void write_coo_data(FILE *fp, struct COO matrix) {
     if (matrix.type == TYPE_INT) {
         for (int i = 0; i < matrix.rows; i++) {
             for (int j = 0; j < matrix.cols; j++) {
+                // Assuming elements x,y are sorted
                 if (matrix.elements[pos].x != i) { // Skip checking elements if none are on the same row
                     fprintf(fp, "0");
                     count += matrix.cols - j;

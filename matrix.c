@@ -29,8 +29,11 @@ int main(int argc, char *argv[]) {
     bool log = false;
     int arg = 1; // Argument pointer
     int threads = -1;
+
+    // Timing variables
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
+    float load_time, routine_time;
 
     // CLA processing
     if (argc < 4) {
@@ -171,16 +174,16 @@ int main(int argc, char *argv[]) {
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
-            struct COO matrix = coo_format(rows, cols, type, data);
+            struct COO coo_matrix = coo_format(rows, cols, type, data);
             end = clock();
-            float load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
 
             // Perform the scalar multiplication routine
             start = clock();
-            scalar_multiply(matrix, routine.scalar);
+            scalar_multiply(coo_matrix, routine.scalar);
             end = clock();
-            float routine_time = (double) (end - start) / CLOCKS_PER_SEC;
-            matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
+            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
 
             if (log) {
                 char *output_file = get_output_name(tm, "sm");
@@ -189,19 +192,78 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
                 }
-                write_details(output, filename, filename2, rows, cols, routine.type, matrix.type);
-                write_coo_data(output, matrix);
+                write_details(output, filename, filename2, rows, cols, routine.type, coo_matrix.type);
+                write_coo_data(output, coo_matrix);
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
-                write_details(stdout, filename, filename2, rows, cols, routine.type, matrix.type);
-                write_coo_data(stdout, matrix);
+                write_details(stdout, filename, filename2, rows, cols, routine.type, coo_matrix.type);
+                write_coo_data(stdout, coo_matrix);
                 write_times(stdout, load_time, routine_time);
             }
             break;
         case TR:
+            // Read input file
+            start = clock();
+            type = read_mat_type(fp);
+            rows = read_mat_dim(fp);
+            cols = read_mat_dim(fp);
+            if (rows != cols) {
+                fprintf(stderr, "matrix: the trace routine can only be performed on square matrices\n");
+                exit(EXIT_FAILURE);
+            }
+            data = read_line(fp);
+            struct CSR csr_matrix = csr_format(rows, cols, type, data);
+            end = clock();
+            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+
+            // Perform the trace routine
+            union {
+                int i;
+                float f;
+            } trace_result;
+            if (csr_matrix.type == TYPE_INT) {
+                start = clock();
+                trace_result.i = trace(csr_matrix);
+                end = clock();
+                routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            } else {
+                start = clock();
+                trace_result.f = trace_f(csr_matrix);
+                end = clock();
+                routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            }
+            
+            if (log) {
+                char *output_file = get_output_name(tm, "tr");
+                FILE *output = fopen(output_file, "w"); // sample file
+                if(output == NULL) {
+                    fprintf(stderr, "matrix: failed to generate output file\n");
+                    exit(EXIT_FAILURE);
+                }
+                write_details(output, filename, filename2, rows, cols, routine.type, csr_matrix.type);
+
+                // Write single trace value
+                if (csr_matrix.type == TYPE_INT) {
+                    fprintf(output, "%d\n", trace_result.i); 
+                } else {
+                    fprintf(output, "%f\n", trace_result.f);
+                }
+                write_times(output, load_time, routine_time);
+                printf("matrix: successfully logged results to '%s'\n", output_file);
+                fclose(output);
+                free(output_file);
+            } else {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, csr_matrix.type);
+                if (csr_matrix.type == TYPE_INT) {
+                    fprintf(stdout, "%d\n", trace_result.i); 
+                } else {
+                    fprintf(stdout, "%f\n", trace_result.f);
+                }
+                write_times(stdout, load_time, routine_time);
+            }
             break;
         case AD:
             break;

@@ -109,6 +109,10 @@ extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data)
  */
 extern void scalar_multiply(struct COO matrix, float scalar);
 
+extern int trace(struct CSR matrix);
+
+extern float trace_f(struct CSR matrix);
+
 /**
  * Allocates memory of a given size using malloc
  * 
@@ -136,10 +140,37 @@ void *reallocate(void *ptr, size_t size);
  */
 extern char *get_output_name(struct tm tm, char *routine);
 
+/**
+ * Writes the time taken to process and load data and the time taken
+ * to execute the specified algebraic routine
+ * 
+ * @param fp  The file pointer to output to
+ * @param load_time The process and load time in seconds
+ * @param routine_time The algebraic routine execution time in seconds
+ */
 extern void write_times(FILE *fp, float load_time, float routine_time);
 
+/**
+ * Writes the COO structure data to the given file pointer.
+ * The function assumes that the x,y values for each element
+ * is sorted to take advantage of quicker printing algorithms
+ * 
+ * @param fp The file pointer to output to
+ * @param matrix The matrix containing the data to write from
+ */
 extern void write_coo_data(FILE *fp, struct COO matrix);
 
+/**
+ * Writes the header details to the given file pointer
+ * 
+ * @param fp The file pointer to output to
+ * @param filename The filename of the first matrix
+ * @param filename2 The filename of the second matrix if any
+ * @param rows The number of rows in the matrix
+ * @param cols The number of columns in the matrix
+ * @param routine The algebraic routine type
+ * @param type The variable type of the matrix
+ */
 extern void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type);
 
 // COO representation
