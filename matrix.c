@@ -305,13 +305,13 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "matrix: the addition routine should only be performed on matrices of identical variable types\n");
                 exit(EXIT_FAILURE);
             }
-            struct CSR result;
+            struct CSR adresult;
 
             start = clock();
             if (admatrix.type == TYPE_INT) {
-                result = matrix_addition(admatrix, admatrix2);
+                adresult = matrix_addition(admatrix, admatrix2);
             } else {
-                result = matrix_addition_f(admatrix, admatrix2);
+                adresult = matrix_addition_f(admatrix, admatrix2);
             }
             end = clock();
             routine_time = (double) (end - start) / CLOCKS_PER_SEC;
@@ -323,19 +323,53 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
                 }
-                write_details(output, filename, filename2, rows, cols, routine.type, result.type);
-                write_csr_data(output, result);
+                write_details(output, filename, filename2, rows, cols, routine.type, adresult.type);
+                write_csr_data(output, adresult);
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
-                write_details(stdout, filename, filename2, rows, cols, routine.type, result.type);
-                write_csr_data(stdout, result);
+                write_details(stdout, filename, filename2, rows, cols, routine.type, adresult.type);
+                write_csr_data(stdout, adresult);
                 write_times(stdout, load_time, routine_time);
             }
             break;
         case TS:
+            // Read input file
+            start = clock();
+            type = read_mat_type(fp);
+            rows = read_mat_dim(fp);
+            cols = read_mat_dim(fp);
+            data = read_line(fp);
+            struct CSC tsmatrix = csc_format(rows, cols, type, data);
+            end = clock();
+            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+
+            // Perform the scalar multiplication routine
+            start = clock();
+            struct CSR tsresult = transpose(tsmatrix);
+            end = clock();
+            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+
+            if (log) {
+                char *output_file = get_output_name(tm, "ts");
+                FILE *output = fopen(output_file, "w"); // sample file
+                if(output == NULL) {
+                    fprintf(stderr, "matrix: failed to generate output file\n");
+                    exit(EXIT_FAILURE);
+                }
+                write_details(output, filename, filename2, rows, cols, routine.type, tsresult.type);
+                write_csr_data(output, tsresult);
+                write_times(output, load_time, routine_time);
+                printf("matrix: successfully logged results to '%s'\n", output_file);
+                fclose(output);
+                free(output_file);
+            } else {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, tsresult.type);
+                write_csr_data(stdout, tsresult);
+                write_times(stdout, load_time, routine_time);
+            }
             break;
         case MM:
             break;

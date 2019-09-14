@@ -117,6 +117,7 @@ extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
 
 extern struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2);
 
+extern struct CSR transpose(struct CSC matrix);
 
 /**
  * Allocates memory of a given size using malloc

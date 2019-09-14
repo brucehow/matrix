@@ -209,9 +209,25 @@ struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
 }
 
 
+struct CSR transpose(struct CSC matrix) {
+    struct CSR result;
+    result.rows = matrix.cols;
+    result.cols = matrix.rows;
+    result.ia = matrix.ia;
+    result.ja = matrix.ja;
 
-void transpose(struct COO matrix) {
-
+    if (matrix.type == TYPE_INT) {
+        result.nnz.i = allocate(matrix.count * sizeof(int));
+        for (int i = 0; i < matrix.count; i++) {
+            result.nnz.i[i] = matrix.nnz.i[i];
+        }
+    } else {
+        result.nnz.f = allocate(matrix.count * sizeof(float));
+        for (int i = 0; i < matrix.count; i++) {
+            result.nnz.f[i] = matrix.nnz.f[i];
+        }
+    }
+    return result;
 }
 
 void matrix_multiply(struct COO matrix) {
