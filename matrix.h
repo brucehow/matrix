@@ -115,6 +115,8 @@ extern float trace_f(struct CSR matrix);
 
 extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
 
+extern struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2);
+
 
 /**
  * Allocates memory of a given size using malloc
@@ -163,6 +165,12 @@ extern void write_times(FILE *fp, float load_time, float routine_time);
  */
 extern void write_coo_data(FILE *fp, struct COO matrix);
 
+/**
+ * Writes the CSR structure data to the given file pointer.
+ * 
+ * @param fp The file pointer to output to
+ * @param matrix The matrix containing the data to write from
+ */
 extern void write_csr_data(FILE *fp, struct CSR matrix);
 
 /**

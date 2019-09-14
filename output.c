@@ -156,6 +156,37 @@ void write_csr_data(FILE *fp, struct CSR matrix) {
                 }
             }
         }
+    } else {
+        for (int i = 1; i < matrix.rows+1; i++) {
+            elements = matrix.ia[i] - matrix.ia[i-1];
+            pos = matrix.ia[i-1];
+            count = 0;
+            j = 0;
+            while (count < matrix.cols) {
+                if (elements == 0) { // Written all the elements
+                    fprintf(fp, "0.0");
+                    for (int j = 1; j < matrix.cols - count; j++) {
+                        fprintf(fp, " 0.0");
+                    }
+                    if (i != matrix.rows) { // Write space if not last val
+                        fprintf(fp, " ");
+                    }
+                    break; // Skip to next row
+                }
+                while (j != matrix.ja[pos]) {
+                    fprintf(fp, "0.0 ");
+                    j++;
+                    count++;
+                }
+                fprintf(fp, "%f", matrix.nnz.f[pos++]); // Print the value
+                elements--;
+                j++;
+                count++;
+                if (count != matrix.cols || i != matrix.rows) {
+                    fprintf(fp, " ");
+                }
+            }
+        }
     }
     fprintf(fp, "\n");
 }

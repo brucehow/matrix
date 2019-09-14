@@ -133,6 +133,82 @@ struct CSR matrix_addition(struct CSR matrix, struct CSR matrix2) {
     return result;
 }
 
+struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
+    struct CSR result;
+    result.rows = matrix.rows;
+    result.cols = matrix.cols;
+    result.type = matrix.type;
+
+    size_t nnz_size = matrix.count * sizeof(float);
+    size_t ja_size = matrix.count * sizeof(int);
+    result.ia = allocate(sizeof(int) * (result.rows+1));
+    result.ja = allocate(ja_size);
+    result.nnz.f = allocate(nnz_size);
+    result.count = 0;
+    result.ia[0] = 0;
+
+    for (int i = 1; i < matrix.rows + 1; i++) {
+        int elements = matrix.ia[i] - matrix.ia[i-1];
+        int elements2 = matrix2.ia[i] - matrix2.ia[i-1];
+        int pos = matrix.ia[i-1];
+        int pos2 = matrix2.ia[i-1];
+        int total = elements + elements2;
+
+        while (total > 0) {
+            if (pos - matrix.ia[i-1] == elements) { // Matrix no more elements
+                while (pos2 - matrix2.ia[i-1] <= elements2) {
+                    result.nnz.f[result.count++] = matrix2.nnz.f[pos2++]; 
+
+                    // Dynamic memory allocation
+                    if ((sizeof(int) * result.count) == ja_size) {
+                        nnz_size *= 2;
+                        ja_size *= 2;
+                        result.nnz.f = reallocate(result.nnz.f, nnz_size);
+                        result.ja = reallocate(result.ja, ja_size);
+                    }
+                }
+                break;
+            } else if (pos2 - matrix2.ia[i-1] == elements2) { // Matrix2 no more elements
+                while (pos - matrix.ia[i-1] <= elements) {
+                    result.nnz.f[result.count++] = matrix.nnz.f[pos++]; 
+
+                    // Dynamic memory allocation
+                    if ((sizeof(int) * result.count) == ja_size) {
+                        nnz_size *= 2;
+                        ja_size *= 2;
+                        result.nnz.f = reallocate(result.nnz.f, nnz_size);
+                        result.ja = reallocate(result.ja, ja_size);
+                    }
+                }
+                break;
+            } else { // Both matrices have elements
+                if (matrix.ja[pos] < matrix2.ja[pos2]) {
+                    result.ja[result.count] = matrix.ja[pos];
+                    result.nnz.f[result.count++] = matrix.nnz.f[pos++];
+                } else if (matrix2.ja[pos2] < matrix.ja[pos]) {
+                    result.ja[result.count] = matrix2.ja[pos2];
+                    result.nnz.f[result.count++] = matrix2.nnz.f[pos2++];
+                } else { // Perform addition
+                    result.ja[result.count] = matrix.ja[pos];
+                    result.nnz.f[result.count++] = matrix.nnz.f[pos++] + matrix2.nnz.f[pos2++];
+                    total--;
+                }
+                // Dynamic memory allocation
+                if ((sizeof(int) * result.count) == ja_size) {
+                    nnz_size *= 2;
+                    ja_size *= 2;
+                    result.nnz.f = reallocate(result.nnz.f, nnz_size);
+                    result.ja = reallocate(result.ja, ja_size);
+                }
+                total--;
+            }
+        }
+        result.ia[i] = result.count;
+    }
+    return result;
+}
+
+
 
 void transpose(struct COO matrix) {
 

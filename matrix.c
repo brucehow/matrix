@@ -297,14 +297,22 @@ int main(int argc, char *argv[]) {
             end = clock();
             load_time += (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
 
-            // Check identical dims
+            // Check matrix constraints
             if (admatrix.rows != admatrix2.rows || admatrix.cols != admatrix2.cols) {
                 fprintf(stderr, "matrix: the addition routine can only be performed on matrices with identical dimensions\n");
                 exit(EXIT_FAILURE);
+            } else if (admatrix.type != admatrix2.type) {
+                fprintf(stderr, "matrix: the addition routine should only be performed on matrices of identical variable types\n");
+                exit(EXIT_FAILURE);
             }
+            struct CSR result;
 
             start = clock();
-            struct CSR result = matrix_addition(admatrix, admatrix2);
+            if (admatrix.type == TYPE_INT) {
+                result = matrix_addition(admatrix, admatrix2);
+            } else {
+                result = matrix_addition_f(admatrix, admatrix2);
+            }
             end = clock();
             routine_time = (double) (end - start) / CLOCKS_PER_SEC;
             
