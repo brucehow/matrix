@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     routine.type = UNDEF;
     int rows, cols;
     char *data = NULL;
+    char *data2 = NULL;
     char *filename = NULL;
     char *filename2 = NULL;
     bool log = false;
@@ -159,7 +160,10 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
     if (filename2 != NULL && routine.type != MM && routine.type != AD) {
-        usage("only one matrix input file is required with routine\n");
+        usage("only one matrix input file is required with this routine\n");
+        exit(EXIT_FAILURE);
+    } else if (filename2 == NULL && (routine.type == MM || routine.type == AD)) {
+        usage("two matrix input files are required with this routine\n");
         exit(EXIT_FAILURE);
     }
 
@@ -215,7 +219,7 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             data = read_line(fp);
-            struct CSR csr_matrix = csr_format(rows, cols, type, data);
+            struct CSR trmatrix = csr_format(rows, cols, type, data);
             end = clock();
             load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
 
@@ -224,14 +228,14 @@ int main(int argc, char *argv[]) {
                 int i;
                 float f;
             } trace_result;
-            if (csr_matrix.type == TYPE_INT) {
+            if (trmatrix.type == TYPE_INT) {
                 start = clock();
-                trace_result.i = trace(csr_matrix);
+                trace_result.i = trace(trmatrix);
                 end = clock();
                 routine_time = (double) (end - start) / CLOCKS_PER_SEC;
             } else {
                 start = clock();
-                trace_result.f = trace_f(csr_matrix);
+                trace_result.f = trace_f(trmatrix);
                 end = clock();
                 routine_time = (double) (end - start) / CLOCKS_PER_SEC;
             }
@@ -243,10 +247,10 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
                 }
-                write_details(output, filename, filename2, rows, cols, routine.type, csr_matrix.type);
+                write_details(output, filename, filename2, rows, cols, routine.type, trmatrix.type);
 
                 // Write single trace value
-                if (csr_matrix.type == TYPE_INT) {
+                if (trmatrix.type == TYPE_INT) {
                     fprintf(output, "%d\n", trace_result.i); 
                 } else {
                     fprintf(output, "%f\n", trace_result.f);
@@ -256,8 +260,8 @@ int main(int argc, char *argv[]) {
                 fclose(output);
                 free(output_file);
             } else {
-                write_details(stdout, filename, filename2, rows, cols, routine.type, csr_matrix.type);
-                if (csr_matrix.type == TYPE_INT) {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, trmatrix.type);
+                if (trmatrix.type == TYPE_INT) {
                     fprintf(stdout, "%d\n", trace_result.i); 
                 } else {
                     fprintf(stdout, "%f\n", trace_result.f);
@@ -266,6 +270,43 @@ int main(int argc, char *argv[]) {
             }
             break;
         case AD:
+            // Read input files
+            start = clock();
+            type = read_mat_type(fp);
+            rows = read_mat_dim(fp);
+            cols = read_mat_dim(fp);
+            data = read_line(fp);
+            struct CSR admatrix = csr_format(rows, cols, type, data);
+            end = clock();
+            load_time = (double) (end - start) / CLOCKS_PER_SEC;
+
+            // Filename2 validation
+            FILE *fp2 = fopen(filename2, "r");
+            if (fp2 == NULL) {
+                fprintf(stderr, "%s: no such file\n", filename2);
+                exit(EXIT_FAILURE);
+            }
+
+            start = clock();
+            type = read_mat_type(fp2);
+            rows = read_mat_dim(fp2);
+            cols = read_mat_dim(fp2);
+            data2 = read_line(fp2);
+            struct CSR admatrix2 = csr_format(rows, cols, type, data2);
+
+            end = clock();
+            load_time += (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+
+            // Check identical dims
+            if (admatrix.rows != admatrix2.rows || admatrix.cols != admatrix2.cols) {
+                fprintf(stderr, "matrix: the addition routine can only be performed on matrices with identical dimensions\n");
+                exit(EXIT_FAILURE);
+            }
+
+            start = clock();
+            struct CSR result = matrix_addition(admatrix, admatrix2);
+            end = clock();
+            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
             break;
         case TS:
             break;
@@ -277,5 +318,6 @@ int main(int argc, char *argv[]) {
     }
     fclose(fp);
     free(data);
+    free(data2);
     exit(EXIT_SUCCESS);
 }

@@ -7,3 +7,6 @@ matrix
 
 # Resource files
 resources/
+
+# Mac OS
+*.DS_STORE

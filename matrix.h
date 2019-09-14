@@ -113,6 +113,9 @@ extern int trace(struct CSR matrix);
 
 extern float trace_f(struct CSR matrix);
 
+extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
+
+
 /**
  * Allocates memory of a given size using malloc
  * 
