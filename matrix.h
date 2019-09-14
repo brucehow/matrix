@@ -163,6 +163,8 @@ extern void write_times(FILE *fp, float load_time, float routine_time);
  */
 extern void write_coo_data(FILE *fp, struct COO matrix);
 
+extern void write_csr_data(FILE *fp, struct CSR matrix);
+
 /**
  * Writes the header details to the given file pointer
  * 

@@ -119,3 +119,43 @@ void write_coo_data(FILE *fp, struct COO matrix) {
     }
     fprintf(fp, "\n");
 }
+
+void write_csr_data(FILE *fp, struct CSR matrix) {
+    int elements = 0; // Number of non zero elements in each row
+    int pos = 0; // Position pointer
+    int count = 0; // Number of written values
+    int j = 0;
+    if (matrix.type == TYPE_INT) {
+        for (int i = 1; i < matrix.rows+1; i++) {
+            elements = matrix.ia[i] - matrix.ia[i-1];
+            pos = matrix.ia[i-1];
+            count = 0;
+            j = 0;
+            while (count < matrix.cols) {
+                if (elements == 0) { // Written all the elements
+                    fprintf(fp, "0");
+                    for (int j = 1; j < matrix.cols - count; j++) {
+                        fprintf(fp, " 0");
+                    }
+                    if (i != matrix.rows) { // Write space if not last val
+                        fprintf(fp, " ");
+                    }
+                    break; // Skip to next row
+                }
+                while (j != matrix.ja[pos]) {
+                    fprintf(fp, "0 ");
+                    j++;
+                    count++;
+                }
+                fprintf(fp, "%d", matrix.nnz.i[pos++]); // Print the value
+                elements--;
+                j++;
+                count++;
+                if (count != matrix.cols || i != matrix.rows) {
+                    fprintf(fp, " ");
+                }
+            }
+        }
+    }
+    fprintf(fp, "\n");
+}

@@ -307,6 +307,25 @@ int main(int argc, char *argv[]) {
             struct CSR result = matrix_addition(admatrix, admatrix2);
             end = clock();
             routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            
+            if (log) {
+                char *output_file = get_output_name(tm, "ad");
+                FILE *output = fopen(output_file, "w"); // sample file
+                if(output == NULL) {
+                    fprintf(stderr, "matrix: failed to generate output file\n");
+                    exit(EXIT_FAILURE);
+                }
+                write_details(output, filename, filename2, rows, cols, routine.type, result.type);
+                write_csr_data(output, result);
+                write_times(output, load_time, routine_time);
+                printf("matrix: successfully logged results to '%s'\n", output_file);
+                fclose(output);
+                free(output_file);
+            } else {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, result.type);
+                write_csr_data(stdout, result);
+                write_times(stdout, load_time, routine_time);
+            }
             break;
         case TS:
             break;
