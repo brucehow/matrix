@@ -370,6 +370,49 @@ int main(int argc, char *argv[]) {
             }
             break;
         case MM:
+            // Read input files
+            gettimeofday(&start, NULL);
+            type = read_mat_type(fp);
+            rows = read_mat_dim(fp);
+            cols = read_mat_dim(fp);
+            data = read_line(fp);
+            struct CSR mm1 = csr_format(rows, cols, type, data);
+            gettimeofday(&end, NULL);
+            load_time = get_time(start, end);
+
+            // Filename2 validation
+            FILE *mmfp2 = fopen(filename2, "r");
+            if (mmfp2 == NULL) {
+                fprintf(stderr, "%s: no such file\n", filename2);
+                exit(EXIT_FAILURE);
+            }
+
+            gettimeofday(&start, NULL);
+            type = read_mat_type(mmfp2);
+            rows = read_mat_dim(mmfp2);
+            cols = read_mat_dim(mmfp2);
+            data2 = read_line(mmfp2);
+            struct CSC mm2 = csc_format(rows, cols, type, data2);
+
+            gettimeofday(&end, NULL);
+            load_time += get_time(start, end);
+
+            // Check matrix constraints
+            if (mm1.cols != mm2.rows) {
+                fprintf(stderr, "matrix: the matrix multiplication routine can only be performed if the columns on matrix 1 matches the rows on matrix 2\n");
+                exit(EXIT_FAILURE);
+            } else if (mm1.type != mm2.type) {
+                fprintf(stderr, "matrix: the matrix multiplication routine should only be performed on matrices of identical variable types\n");
+                exit(EXIT_FAILURE);
+            }
+            struct COO mmresult;
+
+            gettimeofday(&start, NULL);
+            mmresult = matrix_multiply(mm1, mm2);
+            gettimeofday(&end, NULL);
+            routine_time = get_time(start, end);
+            
+            write_coo_data(stdout, mmresult);
             break;
         case UNDEF: // No routines specified
             usage("no matrix algebra routine specified\n");

@@ -153,6 +153,15 @@ extern struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2);
 extern struct CSR transpose(struct CSC matrix);
 
 /**
+ * Performs matrix multiplication on two given matrices
+ * 
+ * @param matrix The first matrix
+ * @param matrix2 The second matrix
+ * @return struct COO The resulting multiplied matrix
+ */
+extern struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2);
+
+/**
  * Allocates memory of a given size using malloc
  * 
  * @param size Size of the memory allocation

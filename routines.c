@@ -231,6 +231,51 @@ struct CSR transpose(struct CSC matrix) {
     return result;
 }
 
-void matrix_multiply(struct COO matrix) {
-    
+struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2) {
+    struct COO result;
+    result.count = 0;
+    result.type = matrix.type;
+    size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
+    result.elements = allocate(elements_size);
+    result.rows = matrix.rows;
+    result.cols = matrix2.cols;
+
+    for (int i = 0; i < result.rows; i++) {
+        int m1count = matrix.ia[i+1] - matrix.ia[i];
+
+        for (int j = 0; j < result.cols; j++) {
+            int dp = 0; // Final dot product
+
+            int m1pos = matrix.ia[i];
+            int m1seen = 0;
+            int m2count = matrix2.ia[j+1] - matrix2.ia[j];
+            int m2pos = matrix2.ia[j];
+            int m2seen = 0;
+
+            while (m1seen != m1count && m2seen != m2count) {
+                if (matrix.ja[m1pos] == matrix2.ja[m2pos]) { // Row and col index match
+                    dp += (matrix.nnz.i[m1pos++] * matrix2.nnz.i[m2pos++]);
+                    m1seen++;
+                    m2seen++;
+                } else if (matrix.ja[m1pos] < matrix2.ja[m2pos]) {
+                    m1seen++;
+                    m1pos++;
+                } else {
+                    m2seen++;
+                    m2pos++;
+                }
+            }
+            if (dp != 0) {
+                // Dynamically allocate memory for elements struct pointer
+                if (((result.count) * sizeof(struct ELEMENT)) == elements_size) {
+                    elements_size *= 2;
+                    result.elements = reallocate(result.elements, elements_size);
+                }
+                result.elements[result.count].value.i = dp;
+                result.elements[result.count].x = i;
+                result.elements[result.count++].y = j;
+            }
+        }
+    }
+    return result;
 }
