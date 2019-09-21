@@ -8,7 +8,7 @@
 
 PROGNAME = matrix
 GCC = gcc-9 -std=c99 -pedantic -Wall -Werror -fopenmp
-DEPENDENCIES = matrix.c format.c memory.c process.c routines.c output.c
+DEPENDENCIES = matrix.c format.c memory.c process.c routines.c output.c time.c
 
 all: $(DEPENDENCIES)
 	@$(GCC) -o $(PROGNAME) $(DEPENDENCIES)

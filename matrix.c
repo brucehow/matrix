@@ -31,10 +31,11 @@ int main(int argc, char *argv[]) {
     int arg = 1; // Argument pointer
     int threads = -1;
 
-    // Timing variables
+    // Timing and outfile name variables
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     float load_time, routine_time;
+    struct timeval start, end;
 
     // CLA processing
     if (argc < 4) {
@@ -167,28 +168,23 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Timing variables
-    clock_t start, end;
-
     switch (routine.type) {
         case SM:
             // Read input file
-            start = clock();
+            gettimeofday(&start, NULL);
             type = read_mat_type(fp);
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
             struct COO coo_matrix = coo_format(rows, cols, type, data);
-            end = clock();
-            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+            gettimeofday(&end, NULL);
+            load_time = get_time(start, end);
 
             // Perform the scalar multiplication routine
-            start = clock();
+            gettimeofday(&start, NULL);
             scalar_multiply(coo_matrix, routine.scalar);
-            end = clock();
-            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
-            coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
-
+            gettimeofday(&end, NULL);
+            routine_time = get_time(start, end);
             if (log) {
                 char *output_file = get_output_name(tm, "sm");
                 FILE *output = fopen(output_file, "w"); // sample file
@@ -197,6 +193,7 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, coo_matrix.type);
+                coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
                 write_coo_data(output, coo_matrix);
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
@@ -204,13 +201,14 @@ int main(int argc, char *argv[]) {
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, coo_matrix.type);
+                coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
                 write_coo_data(stdout, coo_matrix);
                 write_times(stdout, load_time, routine_time);
             }
             break;
         case TR:
             // Read input file
-            start = clock();
+            gettimeofday(&start, NULL);
             type = read_mat_type(fp);
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
@@ -220,8 +218,8 @@ int main(int argc, char *argv[]) {
             }
             data = read_line(fp);
             struct CSR trmatrix = csr_format(rows, cols, type, data);
-            end = clock();
-            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+            gettimeofday(&end, NULL);
+            load_time = get_time(start, end);
 
             // Perform the trace routine
             union {
@@ -229,15 +227,15 @@ int main(int argc, char *argv[]) {
                 float f;
             } trace_result;
             if (trmatrix.type == TYPE_INT) {
-                start = clock();
+                gettimeofday(&start, NULL);
                 trace_result.i = trace(trmatrix);
-                end = clock();
-                routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+                gettimeofday(&end, NULL);
+                routine_time = get_time(start, end);
             } else {
-                start = clock();
+                gettimeofday(&start, NULL);
                 trace_result.f = trace_f(trmatrix);
-                end = clock();
-                routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+                gettimeofday(&end, NULL);
+                routine_time = get_time(start, end);
             }
             
             if (log) {
@@ -271,14 +269,14 @@ int main(int argc, char *argv[]) {
             break;
         case AD:
             // Read input files
-            start = clock();
+            gettimeofday(&start, NULL);
             type = read_mat_type(fp);
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
             struct CSR admatrix = csr_format(rows, cols, type, data);
-            end = clock();
-            load_time = (double) (end - start) / CLOCKS_PER_SEC;
+            gettimeofday(&end, NULL);
+            load_time = get_time(start, end);
 
             // Filename2 validation
             FILE *fp2 = fopen(filename2, "r");
@@ -287,15 +285,15 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
 
-            start = clock();
+            gettimeofday(&start, NULL);
             type = read_mat_type(fp2);
             rows = read_mat_dim(fp2);
             cols = read_mat_dim(fp2);
             data2 = read_line(fp2);
             struct CSR admatrix2 = csr_format(rows, cols, type, data2);
 
-            end = clock();
-            load_time += (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+            gettimeofday(&end, NULL);
+            load_time += get_time(start, end);
 
             // Check matrix constraints
             if (admatrix.rows != admatrix2.rows || admatrix.cols != admatrix2.cols) {
@@ -307,14 +305,14 @@ int main(int argc, char *argv[]) {
             }
             struct CSR adresult;
 
-            start = clock();
+            gettimeofday(&start, NULL);
             if (admatrix.type == TYPE_INT) {
                 adresult = matrix_addition(admatrix, admatrix2);
             } else {
                 adresult = matrix_addition_f(admatrix, admatrix2);
             }
-            end = clock();
-            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            gettimeofday(&end, NULL);
+            routine_time = get_time(start, end);
             
             if (log) {
                 char *output_file = get_output_name(tm, "ad");
@@ -337,20 +335,20 @@ int main(int argc, char *argv[]) {
             break;
         case TS:
             // Read input file
-            start = clock();
+            gettimeofday(&start, NULL);
             type = read_mat_type(fp);
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
             struct CSC tsmatrix = csc_format(rows, cols, type, data);
-            end = clock();
-            load_time = (double) (end - start) / CLOCKS_PER_SEC; // Divide by CPS for seconds
+            gettimeofday(&end, NULL);
+            load_time = get_time(start, end);
 
             // Perform the scalar multiplication routine
-            start = clock();
+            gettimeofday(&start, NULL);
             struct CSR tsresult = transpose(tsmatrix);
-            end = clock();
-            routine_time = (double) (end - start) / CLOCKS_PER_SEC;
+            gettimeofday(&end, NULL);
+            routine_time = get_time(start, end);
 
             if (log) {
                 char *output_file = get_output_name(tm, "ts");

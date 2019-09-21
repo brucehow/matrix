@@ -15,6 +15,7 @@
 #include <time.h>
 #include <inttypes.h>
 #include <omp.h>
+#include <sys/time.h>
 
 #define MEMSIZ 8
 
@@ -109,14 +110,46 @@ extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data)
  */
 extern void scalar_multiply(struct COO matrix, float scalar);
 
+/**
+ * Calculates the trace value of a given int matrix
+ * 
+ * @param matrix The matrix to calculate the trace value for
+ * @return int The trace value
+ */
 extern int trace(struct CSR matrix);
 
+/**
+ * Caclulates the trace value of a given float matrix
+ * 
+ * @param matrix The mateix to calculate the trace value for
+ * @return float The trace value
+ */
 extern float trace_f(struct CSR matrix);
 
+/**
+ * Performs matrix addition on two given integer matrices
+ * 
+ * @param matrix1 The first matrix
+ * @param matrix2 The second matrix
+ * @return struct CSR The resulting added matrix
+ */
 extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
 
+/**
+ * Performs matrix addition on two given float matrices
+ * 
+ * @param matrix1 The first matrix
+ * @param matrix2 The second matrix
+ * @return struct CSR The resulting added matrix
+ */
 extern struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2);
 
+/**
+ * Transposes a given matrix
+ * 
+ * @param matrix The matrix to transpose
+ * @return struct CSR The transposed matrix
+ */
 extern struct CSR transpose(struct CSC matrix);
 
 /**
@@ -186,6 +219,8 @@ extern void write_csr_data(FILE *fp, struct CSR matrix);
  * @param type The variable type of the matrix
  */
 extern void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type);
+
+extern float get_time(struct timeval start, struct timeval end);
 
 // COO representation
 struct COO {

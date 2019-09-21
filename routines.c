@@ -17,7 +17,7 @@ void scalar_multiply(struct COO matrix, float scalar) {
 int trace(struct CSR matrix) {
     int trace = 0;
 
-    #pragma omp parallel for
+    #pragma omp parallel for reduction(+:trace)
     for (int i = 1; i < matrix.rows + 1; i++) {
         // Check num of elements in row i
         int elements = matrix.ia[i] - matrix.ia[i-1];
@@ -41,7 +41,7 @@ int trace(struct CSR matrix) {
 float trace_f(struct CSR matrix) {
     float trace = 0.0;
 
-    #pragma omp parallel for
+    #pragma omp parallel for reduction(+:trace)
     for (int i = 1; i < matrix.rows + 1; i++) {
         // Check num of elements in row i
         int elements = matrix.ia[i] - matrix.ia[i-1];
@@ -215,6 +215,7 @@ struct CSR transpose(struct CSC matrix) {
     result.cols = matrix.rows;
     result.ia = matrix.ia;
     result.ja = matrix.ja;
+    result.type = matrix.type;
 
     if (matrix.type == TYPE_INT) {
         result.nnz.i = allocate(matrix.count * sizeof(int));

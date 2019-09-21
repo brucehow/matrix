@@ -179,54 +179,43 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
 
     // Data reading variables
     int len, pos = 0;
-    int skip = 0; // Use to read data column down
     size_t size = MEMSIZ * sizeof(char);
     char *val = allocate(size);
 
-    for (int i = 0; i < cols; i++) {
-        // Figure out where to start col wise
-        skip = 0;
-        pos = 0;
-        while (skip != i) {
-            if (data[pos] == ' ') {
-                    skip++;
-                }
-                pos++;
-        }
-        skip = 0;
-        for (int j = 0; j < rows; j++) {
-            len = 0; // Reset word length to 0
+    if (type == TYPE_INT) {
+        int grid[rows][cols]; // Placeholder to store values
 
-            while (data[pos] != '\0' && data[pos] != ' ') {
-                val[len++] = data[pos++];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                len = 0; // Reset word length to 0
 
-                // Dynamic memory reallocation for each digit
-                if ((len * sizeof(char)) == size) {
-                    if (data[pos] != '\0' && data[pos] != ' ') {
-                        size += sizeof(char); // Null byte
-                    } else {
-                        size *= 2;
+                while (data[pos] != '\0' && data[pos] != ' ') {
+                    val[len++] = data[pos++];
+
+                    // Dynamic memory reallocation for each digit
+                    if ((len * sizeof(char)) == size) {
+                        if (data[pos] != '\0' && data[pos] != ' ') {
+                            size += sizeof(char); // Null byte
+                        } else {
+                            size *= 2;
+                        }
+                        val = reallocate(val, size);
                     }
-                    val = reallocate(val, size);
                 }
-            }
-            val[len] = '\0';
-            while (data[pos] != '\0' && skip != cols) { // Iterate column 
-                if (data[pos] == ' ') {
-                    skip++;
-                }
-                pos++;
-            }
-            skip = 0;
+                val[len] = '\0';
+                pos++; // Move to next val
 
-            // Zero value filter
-            if (type == TYPE_INT) {
                 int value = strtoimax(val, NULL, 10);
                     if (errno == EINVAL) {
                         fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
                         exit(EXIT_FAILURE);
                 }
-                if (value != 0) {
+                grid[i][j] = value;
+            }
+        }
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                if (grid[i][j] != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -234,24 +223,58 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                         matrix.nnz.i = reallocate(matrix.nnz.i, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.i[matrix.count] = value;
+                    matrix.nnz.i[matrix.count] = grid[i][j];
                     matrix.ja[matrix.count++] = j;
                 }
-            } else {
-                float value = atof(val);
-                if (value != 0.0) {
+            }
+            matrix.ia[i+1] = matrix.count;
+        }
+    } else {
+        float grid[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                len = 0; // Reset word length to 0
+
+                while (data[pos] != '\0' && data[pos] != ' ') {
+                    val[len++] = data[pos++];
+
+                    // Dynamic memory reallocation for each digit
+                    if ((len * sizeof(char)) == size) {
+                        if (data[pos] != '\0' && data[pos] != ' ') {
+                            size += sizeof(char); // Null byte
+                        } else {
+                            size *= 2;
+                        }
+                        val = reallocate(val, size);
+                    }
+                }
+                val[len] = '\0';
+                pos++; // Move to next val
+
+                float value = strtof(val, NULL);
+                if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
+                    exit(EXIT_FAILURE);
+                }
+                grid[i][j] = value;
+            }
+        }
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                if (grid[i][j] != 0.0) {
+                    // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
                         ja_size *= 2;
                         matrix.nnz.f = reallocate(matrix.nnz.f, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.f[matrix.count] = value;
+                    matrix.nnz.f[matrix.count] = grid[i][j];
                     matrix.ja[matrix.count++] = j;
                 }
-            }  
+            }
+            matrix.ia[i+1] = matrix.count;
         }
-        matrix.ia[i+1] = matrix.count;
     }
 
     free(val);
