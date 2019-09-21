@@ -53,7 +53,11 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                     matrix.elements[matrix.count++].y = j;
                 }
             } else {
-                float value = atof(val);
+                double value = strtod(val, NULL);
+                if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
+                    exit(EXIT_FAILURE);
+                }
                 if (value != 0.0) {
                     if ((matrix.count * sizeof(struct ELEMENT)) == elements_size) {
                         elements_size *= 2;
@@ -81,7 +85,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         nnz_size = MEMSIZ * sizeof(int);
         matrix.nnz.i = allocate(nnz_size);
     }  else {
-        nnz_size = MEMSIZ * sizeof(float);
+        nnz_size = MEMSIZ * sizeof(double);
         matrix.nnz.f = allocate(nnz_size);
     }
     matrix.ja = allocate(ja_size);
@@ -136,7 +140,11 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                     matrix.ja[matrix.count++] = j;
                 }
             } else {
-                float value = atof(val);
+                double value = strtod(val, NULL);
+                if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
+                    exit(EXIT_FAILURE);
+                }
                 if (value != 0.0) {
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -166,7 +174,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         nnz_size = MEMSIZ * sizeof(int);
         matrix.nnz.i = allocate(nnz_size);
     }  else {
-        nnz_size = MEMSIZ * sizeof(float);
+        nnz_size = MEMSIZ * sizeof(double);
         matrix.nnz.f = allocate(nnz_size);
     }
     matrix.ja = allocate(ja_size);
@@ -215,7 +223,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         }
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
-                if (grid[i][j] != 0) {
+                if (grid[j][i] != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -223,14 +231,14 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                         matrix.nnz.i = reallocate(matrix.nnz.i, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.i[matrix.count] = grid[i][j];
+                    matrix.nnz.i[matrix.count] = grid[j][i];
                     matrix.ja[matrix.count++] = j;
                 }
             }
             matrix.ia[i+1] = matrix.count;
         }
     } else {
-        float grid[rows][cols];
+        double grid[rows][cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 len = 0; // Reset word length to 0
@@ -251,9 +259,9 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                 val[len] = '\0';
                 pos++; // Move to next val
 
-                float value = strtof(val, NULL);
+                double value = strtod(val, NULL);
                 if (errno == ERANGE) {
-                    fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
+                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
                     exit(EXIT_FAILURE);
                 }
                 grid[i][j] = value;
@@ -261,7 +269,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         }
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
-                if (grid[i][j] != 0.0) {
+                if (grid[j][i] != 0.0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -269,14 +277,13 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                         matrix.nnz.f = reallocate(matrix.nnz.f, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.f[matrix.count] = grid[i][j];
+                    matrix.nnz.f[matrix.count] = grid[j][i];
                     matrix.ja[matrix.count++] = j;
                 }
             }
             matrix.ia[i+1] = matrix.count;
         }
     }
-
     free(val);
     val = NULL;
     return matrix;

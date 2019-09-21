@@ -41,13 +41,19 @@ void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols
             fprintf(stderr, "matrix: could not write routine type to output file\n");
             exit(EXIT_FAILURE);
     }
+    // Print only the file name ommitting file path
     int len = strlen(filename);
     int start = filename_start(filename, len);
     fprintf(fp, "%.*s\n", len - start, filename + start);
     if (filename2 != NULL) {
-        fprintf(fp, "%s\n", filename2);
+        len = strlen(filename2);
+        start = filename_start(filename2, len);
+        fprintf(fp, "%.*s\n", len - start, filename2 + start);
     }
     fprintf(fp, "%d\n", omp_get_max_threads());
+    if (routine == TR) { // Don't write other things if routine is TR
+        return;
+    }
     switch (type) {
         case TYPE_INT:
             fprintf(fp, "int\n");

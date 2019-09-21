@@ -108,7 +108,7 @@ extern struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data)
  * @param matrix The matrix to perform the algebraic routine on
  * @param scalar The int scalar value to multiply by
  */
-extern void scalar_multiply(struct COO matrix, float scalar);
+extern void scalar_multiply(struct COO matrix, double scalar);
 
 /**
  * Calculates the trace value of a given int matrix
@@ -124,7 +124,7 @@ extern int trace(struct CSR matrix);
  * @param matrix The mateix to calculate the trace value for
  * @return float The trace value
  */
-extern float trace_f(struct CSR matrix);
+extern double trace_f(struct CSR matrix);
 
 /**
  * Performs matrix addition on two given integer matrices
@@ -220,6 +220,14 @@ extern void write_csr_data(FILE *fp, struct CSR matrix);
  */
 extern void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols, enum ROUTINE_TYPE routine, enum VAR_TYPE type);
 
+/**
+ * Calculate the total elasped time given two start and 
+ * end timeval structures
+ * 
+ * @param start The starting time
+ * @param end The ending time
+ * @return float The time taken
+ */
 extern float get_time(struct timeval start, struct timeval end);
 
 // COO representation
@@ -233,7 +241,7 @@ struct COO {
         int y;
         union { // Use of union to represent both int and float
             int i;
-            float f;
+            double f;
         } value;
     } *elements;
 };
@@ -246,7 +254,7 @@ struct CSR {
     int count; // Number of NNZ values
     union {
         int *i;
-        float *f;
+        double *f;
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific row
     int *ja; // List of column index for each NNZ value
@@ -260,7 +268,7 @@ struct CSC {
     int count; // Number of NNZ values
     union {
         int *i;
-        float *f;
+        double *f;
     } nnz; // List of non-zero values
     int *ia; // Total number of elements up until specific col
     int *ja; // List of row index for each NNZ value
@@ -269,5 +277,5 @@ struct CSC {
 // Routine representation
 struct ROUTINE {
     enum ROUTINE_TYPE type;
-    float scalar; // If SM is used
+    double scalar; // If SM is used
 };

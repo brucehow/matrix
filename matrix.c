@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
                 usage("scalar value must be numeric\n");
                 exit(EXIT_FAILURE);
             } else {
-                routine.scalar = strtof(argv[arg], NULL);
+                routine.scalar = strtod(argv[arg], NULL);
                 if (errno == ERANGE) {
-                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to float\n", argv[arg]);
+                    fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", argv[arg]);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
             // Perform the trace routine
             union {
                 int i;
-                float f;
+                double f;
             } trace_result;
             if (trmatrix.type == TYPE_INT) {
                 gettimeofday(&start, NULL);

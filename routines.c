@@ -1,10 +1,10 @@
 #include "matrix.h"
 
-void scalar_multiply(struct COO matrix, float scalar) {
+void scalar_multiply(struct COO matrix, double scalar) {
     if (matrix.type == TYPE_INT) {
         #pragma omp parallel for
         for (int i = 0; i < matrix.count; i++) {
-            matrix.elements[i].value.f = (float) matrix.elements[i].value.i * scalar;
+            matrix.elements[i].value.f = (double) matrix.elements[i].value.i * scalar;
         }
     } else {
         #pragma omp parallel for
@@ -38,8 +38,8 @@ int trace(struct CSR matrix) {
     return trace;
 }
 
-float trace_f(struct CSR matrix) {
-    float trace = 0.0;
+double trace_f(struct CSR matrix) {
+    double trace = 0.0;
 
     #pragma omp parallel for reduction(+:trace)
     for (int i = 1; i < matrix.rows + 1; i++) {
@@ -139,7 +139,7 @@ struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
     result.cols = matrix.cols;
     result.type = matrix.type;
 
-    size_t nnz_size = matrix.count * sizeof(float);
+    size_t nnz_size = matrix.count * sizeof(double);
     size_t ja_size = matrix.count * sizeof(int);
     result.ia = allocate(sizeof(int) * (result.rows+1));
     result.ja = allocate(ja_size);
@@ -223,7 +223,7 @@ struct CSR transpose(struct CSC matrix) {
             result.nnz.i[i] = matrix.nnz.i[i];
         }
     } else {
-        result.nnz.f = allocate(matrix.count * sizeof(float));
+        result.nnz.f = allocate(matrix.count * sizeof(double));
         for (int i = 0; i < matrix.count; i++) {
             result.nnz.f[i] = matrix.nnz.f[i];
         }
