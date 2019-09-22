@@ -23,11 +23,6 @@
 #define OUTPUT_NAME_SIZE 31
 #define SID 22242664
 
-// DEBUG MACROS
-#define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
-#define pstr(x) printf("%s = %s\n", #x, x); fflush(stdout);
-#define p() printf("HERE\n");fflush(stdout);
-
 // Matrix type classifier
 enum VAR_TYPE {TYPE_INT, TYPE_FLOAT, INVALID};
 enum ROUTINE_TYPE {SM, TR, AD, TS, MM, UNDEF};
@@ -160,6 +155,15 @@ extern struct CSR transpose(struct CSC matrix);
  * @return struct COO The resulting multiplied matrix
  */
 extern struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2);
+
+/**
+ * Performs matrix multiplication on two given matrices
+ * 
+ * @param matrix The first matrix
+ * @param matrix2 The second matrix
+ * @return struct COO The resulting multiplied matrix
+ */
+extern struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2);
 
 /**
  * Allocates memory of a given size using malloc

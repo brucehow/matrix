@@ -176,13 +176,13 @@ int main(int argc, char *argv[]) {
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
-            struct COO coo_matrix = coo_format(rows, cols, type, data);
+            struct COO smresult = coo_format(rows, cols, type, data);
             gettimeofday(&end, NULL);
             load_time = get_time(start, end);
 
             // Perform the scalar multiplication routine
             gettimeofday(&start, NULL);
-            scalar_multiply(coo_matrix, routine.scalar);
+            scalar_multiply(smresult, routine.scalar);
             gettimeofday(&end, NULL);
             routine_time = get_time(start, end);
             if (log) {
@@ -192,17 +192,17 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
                 }
-                write_details(output, filename, filename2, rows, cols, routine.type, coo_matrix.type);
-                coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
-                write_coo_data(output, coo_matrix);
+                write_details(output, filename, filename2, rows, cols, routine.type, smresult.type);
+                smresult.type = TYPE_FLOAT; // Float scalar results in float matrix
+                write_coo_data(output, smresult);
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
-                write_details(stdout, filename, filename2, rows, cols, routine.type, coo_matrix.type);
-                coo_matrix.type = TYPE_FLOAT; // Float scalar results in float matrix
-                write_coo_data(stdout, coo_matrix);
+                write_details(stdout, filename, filename2, rows, cols, routine.type, smresult.type);
+                smresult.type = TYPE_FLOAT; // Float scalar results in float matrix
+                write_coo_data(stdout, smresult);
                 write_times(stdout, load_time, routine_time);
             }
             break;
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
             data = read_line(fp);
-            struct CSR trmatrix = csr_format(rows, cols, type, data);
+            struct CSR trresult = csr_format(rows, cols, type, data);
             gettimeofday(&end, NULL);
             load_time = get_time(start, end);
 
@@ -226,14 +226,14 @@ int main(int argc, char *argv[]) {
                 int i;
                 double f;
             } trace_result;
-            if (trmatrix.type == TYPE_INT) {
+            if (trresult.type == TYPE_INT) {
                 gettimeofday(&start, NULL);
-                trace_result.i = trace(trmatrix);
+                trace_result.i = trace(trresult);
                 gettimeofday(&end, NULL);
                 routine_time = get_time(start, end);
             } else {
                 gettimeofday(&start, NULL);
-                trace_result.f = trace_f(trmatrix);
+                trace_result.f = trace_f(trresult);
                 gettimeofday(&end, NULL);
                 routine_time = get_time(start, end);
             }
@@ -245,10 +245,10 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "matrix: failed to generate output file\n");
                     exit(EXIT_FAILURE);
                 }
-                write_details(output, filename, filename2, rows, cols, routine.type, trmatrix.type);
+                write_details(output, filename, filename2, rows, cols, routine.type, trresult.type);
 
                 // Write single trace value
-                if (trmatrix.type == TYPE_INT) {
+                if (trresult.type == TYPE_INT) {
                     fprintf(output, "%d\n", trace_result.i); 
                 } else {
                     fprintf(output, "%f\n", trace_result.f);
@@ -258,8 +258,8 @@ int main(int argc, char *argv[]) {
                 fclose(output);
                 free(output_file);
             } else {
-                write_details(stdout, filename, filename2, rows, cols, routine.type, trmatrix.type);
-                if (trmatrix.type == TYPE_INT) {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, trresult.type);
+                if (trresult.type == TYPE_INT) {
                     fprintf(stdout, "%d\n", trace_result.i); 
                 } else {
                     fprintf(stdout, "%f\n", trace_result.f);
@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
-            struct CSR admatrix = csr_format(rows, cols, type, data);
+            struct CSR ad1 = csr_format(rows, cols, type, data);
             gettimeofday(&end, NULL);
             load_time = get_time(start, end);
 
@@ -290,26 +290,26 @@ int main(int argc, char *argv[]) {
             rows = read_mat_dim(fp2);
             cols = read_mat_dim(fp2);
             data2 = read_line(fp2);
-            struct CSR admatrix2 = csr_format(rows, cols, type, data2);
+            struct CSR ad2 = csr_format(rows, cols, type, data2);
 
             gettimeofday(&end, NULL);
             load_time += get_time(start, end);
 
             // Check matrix constraints
-            if (admatrix.rows != admatrix2.rows || admatrix.cols != admatrix2.cols) {
+            if (ad1.rows != ad2.rows || ad1.cols != ad2.cols) {
                 fprintf(stderr, "matrix: the addition routine can only be performed on matrices with identical dimensions\n");
                 exit(EXIT_FAILURE);
-            } else if (admatrix.type != admatrix2.type) {
+            } else if (ad1.type != ad2.type) {
                 fprintf(stderr, "matrix: the addition routine should only be performed on matrices of identical variable types\n");
                 exit(EXIT_FAILURE);
             }
             struct CSR adresult;
 
             gettimeofday(&start, NULL);
-            if (admatrix.type == TYPE_INT) {
-                adresult = matrix_addition(admatrix, admatrix2);
+            if (ad1.type == TYPE_INT) {
+                adresult = matrix_addition(ad1, ad2);
             } else {
-                adresult = matrix_addition_f(admatrix, admatrix2);
+                adresult = matrix_addition_f(ad1, ad2);
             }
             gettimeofday(&end, NULL);
             routine_time = get_time(start, end);
@@ -340,13 +340,13 @@ int main(int argc, char *argv[]) {
             rows = read_mat_dim(fp);
             cols = read_mat_dim(fp);
             data = read_line(fp);
-            struct CSC tsmatrix = csc_format(rows, cols, type, data);
+            struct CSC ts1 = csc_format(rows, cols, type, data);
             gettimeofday(&end, NULL);
             load_time = get_time(start, end);
 
             // Perform the scalar multiplication routine
             gettimeofday(&start, NULL);
-            struct CSR tsresult = transpose(tsmatrix);
+            struct CSR tsresult = transpose(ts1);
             gettimeofday(&end, NULL);
             routine_time = get_time(start, end);
 
@@ -393,26 +393,47 @@ int main(int argc, char *argv[]) {
             cols = read_mat_dim(mmfp2);
             data2 = read_line(mmfp2);
             struct CSC mm2 = csc_format(rows, cols, type, data2);
-
+            
             gettimeofday(&end, NULL);
             load_time += get_time(start, end);
 
             // Check matrix constraints
             if (mm1.cols != mm2.rows) {
-                fprintf(stderr, "matrix: the matrix multiplication routine can only be performed if the columns on matrix 1 matches the rows on matrix 2\n");
+                fprintf(stderr, "matrix: the multiplication routine can only be performed if the columns and rows on the first and second matrices are equal\n");
                 exit(EXIT_FAILURE);
             } else if (mm1.type != mm2.type) {
-                fprintf(stderr, "matrix: the matrix multiplication routine should only be performed on matrices of identical variable types\n");
+                fprintf(stderr, "matrix: the multiplication routine should only be performed on matrices of identical variable types\n");
                 exit(EXIT_FAILURE);
             }
             struct COO mmresult;
 
             gettimeofday(&start, NULL);
-            mmresult = matrix_multiply(mm1, mm2);
+            if (mm1.type == TYPE_INT) {
+                mmresult = matrix_multiply(mm1, mm2);
+            } else {
+                mmresult = matrix_multiply_f(mm1, mm2);
+            }
             gettimeofday(&end, NULL);
             routine_time = get_time(start, end);
-            
-            write_coo_data(stdout, mmresult);
+
+            if (log) {
+                char *output_file = get_output_name(tm, "mm");
+                FILE *output = fopen(output_file, "w"); // sample file
+                if(output == NULL) {
+                    fprintf(stderr, "matrix: failed to generate output file\n");
+                    exit(EXIT_FAILURE);
+                }
+                write_details(output, filename, filename2, rows, cols, routine.type, mmresult.type);
+                write_coo_data(output, mmresult);
+                write_times(output, load_time, routine_time);
+                printf("matrix: successfully logged results to '%s'\n", output_file);
+                fclose(output);
+                free(output_file);
+            } else {
+                write_details(stdout, filename, filename2, rows, cols, routine.type, mmresult.type);
+                write_coo_data(stdout, mmresult);
+                write_times(stdout, load_time, routine_time);
+            }
             break;
         case UNDEF: // No routines specified
             usage("no matrix algebra routine specified\n");
