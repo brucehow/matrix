@@ -177,13 +177,13 @@ struct CSR transpose(struct CSC matrix) {
 
     if (matrix.type == TYPE_INT) {
         result.nnz.i = allocate(matrix.count * sizeof(int));
-        //#pragma omp parallel for shared(result,matrix)
+        #pragma omp parallel for shared(result,matrix) num_threads(param.threads)
         for (i = 0; i < matrix.count; i++) {
             result.nnz.i[i] = matrix.nnz.i[i];
         }
     } else {
         result.nnz.f = allocate(matrix.count * sizeof(double));
-        //#pragma omp parallel for shared(result,matrix)
+        #pragma omp parallel for shared(result,matrix) num_threads(param.threads)
         for (i = 0; i < matrix.count; i++) {
             result.nnz.f[i] = matrix.nnz.f[i];
         }

@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             } else if (strcmp(argv[arg+1], "--sm") == 0 || strcmp(argv[arg+1], "--tr") == 0 || strcmp(argv[arg+1], "--ad") == 0
                     || strcmp(argv[arg+1], "--ts") == 0 || strcmp(argv[arg+1], "--mm") == 0 || strcmp(argv[arg+1], "-t") == 0
-                    || strcmp(argv[arg+1], "-l") == 0 || strcmp(argv[arg+1], "-f") == 0) {
+                    || strcmp(argv[arg+1], "-l") == 0 || strcmp(argv[arg+1], "-s") == 0 || strcmp(argv[arg+1], "-f") == 0) {
                 usage("at least one matrix file must be specified after -f\n");
                 exit(EXIT_FAILURE);
             } else {
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
                 // Check for second matrix file if any
                 if ((arg + 1) != argc && strcmp(argv[arg+1], "--sm") != 0 && strcmp(argv[arg+1], "--tr") != 0 && strcmp(argv[arg+1], "--ad") != 0
                     && strcmp(argv[arg+1], "--ts") != 0 && strcmp(argv[arg+1], "--mm") != 0 && strcmp(argv[arg+1], "-t") != 0
-                    && strcmp(argv[arg+1], "-l") != 0 && strcmp(argv[arg+1], "-f") != 0) {
+                    && strcmp(argv[arg+1], "-l") != 0 && strcmp(argv[arg+1], "-s") != 0 && strcmp(argv[arg+1], "-f") != 0) {
                     arg++;
                     filename2 = argv[arg];
                 }
