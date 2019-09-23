@@ -244,7 +244,8 @@ struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2) {
     struct COO result;
     result.count = 0;
     result.type = matrix.type;
-    result.elements = allocate((matrix.count + matrix2.count) * sizeof(struct ELEMENT));
+    size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
+    result.elements = allocate(elements_size);
     result.rows = matrix.rows;
     result.cols = matrix2.cols;
 
@@ -274,6 +275,11 @@ struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2) {
                 }
             }
             if (dp != 0) {
+                // Dynamically allocate memory for elements struct pointer
+                if (((result.count) * sizeof(struct ELEMENT)) == elements_size) {
+                    elements_size *= 2;
+                    result.elements = reallocate(result.elements, elements_size);
+                }
                 result.elements[result.count].value.f = dp;
                 result.elements[result.count].x = i;
                 result.elements[result.count++].y = j;
