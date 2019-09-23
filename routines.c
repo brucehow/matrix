@@ -77,7 +77,6 @@ struct CSR matrix_addition(struct CSR matrix, struct CSR matrix2) {
     result.count = 0;
     result.ia[0] = 0;
 
-
     for (int i = 1; i < matrix.rows + 1; i++) {
         int elements = matrix.ia[i] - matrix.ia[i-1];
         int elements2 = matrix2.ia[i] - matrix2.ia[i-1];
@@ -128,7 +127,6 @@ struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
     result.count = 0;
     result.ia[0] = 0;
 
-    #pragma omp parallel for
     for (int i = 1; i < matrix.rows + 1; i++) {
         int elements = matrix.ia[i] - matrix.ia[i-1];
         int elements2 = matrix2.ia[i] - matrix2.ia[i-1];
@@ -179,13 +177,13 @@ struct CSR transpose(struct CSC matrix) {
 
     if (matrix.type == TYPE_INT) {
         result.nnz.i = allocate(matrix.count * sizeof(int));
-        #pragma omp parallel for shared(matrix)
+        //#pragma omp parallel for shared(result,matrix)
         for (i = 0; i < matrix.count; i++) {
             result.nnz.i[i] = matrix.nnz.i[i];
         }
     } else {
         result.nnz.f = allocate(matrix.count * sizeof(double));
-        #pragma omp parallel for shared(matrix)
+        //#pragma omp parallel for shared(result,matrix)
         for (i = 0; i < matrix.count; i++) {
             result.nnz.f[i] = matrix.nnz.f[i];
         }

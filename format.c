@@ -237,7 +237,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         }
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
-                if (grid[i * cols + j] != 0) {
+                if (grid[j * cols + i] != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -245,7 +245,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                         matrix.nnz.i = reallocate(matrix.nnz.i, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.i[matrix.count] = grid[i * cols + j];
+                    matrix.nnz.i[matrix.count] = grid[j * cols + i];
                     matrix.ja[matrix.count++] = j;
                 }
             }
@@ -287,7 +287,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         }
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
-                if (grid[i * cols + j] != 0.0) {
+                if (grid[j * cols + i] != 0.0) {
                     // Dynamically allocate memory for nnz and ja pointers
                     if ((matrix.count * sizeof(int)) == ja_size) {
                         nnz_size *= 2;
@@ -295,7 +295,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                         matrix.nnz.f = reallocate(matrix.nnz.f, nnz_size);
                         matrix.ja = reallocate(matrix.ja, ja_size);
                     }
-                    matrix.nnz.f[matrix.count] = grid[i * cols + j];
+                    matrix.nnz.f[matrix.count] = grid[j * cols + i];
                     matrix.ja[matrix.count++] = j;
                 }
             }
