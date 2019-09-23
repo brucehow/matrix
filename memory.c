@@ -17,3 +17,12 @@ void *reallocate(void* ptr, size_t size) {
     }
     return ptr;
 }
+
+void *callocate(size_t nitems, size_t size) {
+    void *ptr = calloc(nitems, size);
+    if (ptr == NULL) {
+        perror(__func__);
+        exit(EXIT_FAILURE);
+    }
+    return ptr;
+}

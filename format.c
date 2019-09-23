@@ -9,6 +9,7 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.type = type;
     matrix.count = 0;
+    errno = 0;
     
     // Data reading variables
     int len, pos = 0;
@@ -38,9 +39,12 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
             // Zero value filter
             if (type == TYPE_INT) {
                 int value = strtoimax(val, NULL, 10);
-                    if (errno == EINVAL) {
-                        fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
-                        exit(EXIT_FAILURE);
+                if (errno == EINVAL) {
+                    fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
+                    exit(EXIT_FAILURE);
+                } else if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: value in matrix data out of range '%s'\n", val);
+                    exit(EXIT_FAILURE);
                 }
                 if (value != 0) {
                     // Dynamically allocate memory for elements struct pointer
@@ -95,6 +99,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
+    errno = 0;
 
     // Data reading variables
     int len, pos = 0;
@@ -124,9 +129,12 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
             // Zero value filter
             if (type == TYPE_INT) {
                 int value = strtoimax(val, NULL, 10);
-                    if (errno == EINVAL) {
-                        fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
-                        exit(EXIT_FAILURE);
+                if (errno == EINVAL) {
+                    fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
+                    exit(EXIT_FAILURE);
+                } else if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: value in matrix data out of range '%s'\n", val);
+                    exit(EXIT_FAILURE);
                 }
                 if (value != 0) {
                     // Dynamically allocate memory for nnz and ja pointers
@@ -184,6 +192,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
+    errno = 0;
 
     // Data reading variables
     int len, pos = 0;
@@ -191,7 +200,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     char *val = allocate(size);
 
     if (type == TYPE_INT) {
-        int *grid = allocate(sizeof(int) * rows * cols); // Placeholder to store values
+        int *grid = callocate(rows * cols, sizeof(int)); // Placeholder to store values
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 len = 0; // Reset word length to 0
@@ -212,12 +221,18 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                 val[len] = '\0';
                 pos++; // Move to next val
 
+                // Zero value filter and conversion
                 int value = strtoimax(val, NULL, 10);
-                    if (errno == EINVAL) {
-                        fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
-                        exit(EXIT_FAILURE);
+                if (errno == EINVAL) {
+                    fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
+                    exit(EXIT_FAILURE);
+                } else if (errno == ERANGE) {
+                    fprintf(stderr, "matrix: value in matrix data out of range '%s'\n", val);
+                    exit(EXIT_FAILURE);
                 }
-                grid[i * cols + j] = value;
+                if (value != 0) {
+                   grid[i * cols + j] = value; // Calloc defaults to 0
+                }
             }
         }
         for (int i = 0; i < cols; i++) {
@@ -239,7 +254,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
         free(grid);
         grid = NULL;
     } else {
-        double *grid = allocate(sizeof(double) * rows * cols);
+        double *grid = callocate(rows * cols, sizeof(double));
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 len = 0; // Reset word length to 0
@@ -265,7 +280,9 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                     fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
                     exit(EXIT_FAILURE);
                 }
-                grid[i * cols + j] = value;
+                if (value != 0) {
+                    grid[i * cols + j] = value;
+                }
             }
         }
         for (int i = 0; i < cols; i++) {

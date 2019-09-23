@@ -50,7 +50,7 @@ void write_details(FILE *fp, char* filename, char* filename2, int rows, int cols
         start = filename_start(filename2, len);
         fprintf(fp, "%.*s\n", len - start, filename2 + start);
     }
-    fprintf(fp, "%d\n", omp_get_max_threads());
+    fprintf(fp, "%d\n", param.threads);
     if (routine == TR) { // Don't write other things if routine is TR
         return;
     }

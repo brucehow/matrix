@@ -23,6 +23,11 @@
 #define OUTPUT_NAME_SIZE 31
 #define SID 22242664
 
+// DEBUG MACROS
+#define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
+#define pstr(x) printf("%s = %s\n", #x, x); fflush(stdout);
+#define p() printf("HERE\n");fflush(stdout);
+
 // Matrix type classifier
 enum VAR_TYPE {TYPE_INT, TYPE_FLOAT, INVALID};
 enum ROUTINE_TYPE {SM, TR, AD, TS, MM, UNDEF};
@@ -171,7 +176,7 @@ extern struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2);
  * @param size Size of the memory allocation
  * @return void* A pointer to the newly allocated memory
  */
-void *allocate(size_t size);
+extern void *allocate(size_t size);
 
 /**
  * Reallocates memory to a specific size for a given pointer
@@ -180,7 +185,16 @@ void *allocate(size_t size);
  * @param size Size of the memory reallocation
  * @return void* A pointer to the newly reallocated memory
  */
-void *reallocate(void *ptr, size_t size);
+extern void *reallocate(void *ptr, size_t size);
+
+/**
+ * Allocates memory of a given size using calloc
+ * 
+ * @param nitems Number of elements to be allocated
+ * @param size The size of the elements
+ * @return void* A pointer to the newly allocated memory
+ */
+extern void *callocate(size_t nitems, size_t size);
 
 /**
  * Get the output name for the output file given the current
@@ -242,6 +256,13 @@ extern void write_details(FILE *fp, char* filename, char* filename2, int rows, i
  * @return float The time taken
  */
 extern float get_time(struct timeval start, struct timeval end);
+
+// Global vars
+struct GLOBAL_PARAM {
+    int threads;
+};
+
+extern struct GLOBAL_PARAM param;
 
 // COO representation
 struct COO {

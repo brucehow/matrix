@@ -1,5 +1,7 @@
 #include "matrix.h"
 
+struct GLOBAL_PARAM param;
+
 void usage(char *err) {
     char *usage = "\nusage: matrix {routines} [options] -f matrix1 [matrix2]\n"
                 "routines:\n"
@@ -10,7 +12,8 @@ void usage(char *err) {
                 "  --mm\t\tperform matrix multiplication on two matrices, matrix2 must be specified\n"
                 "options:\n"
                 "  -t threads\tspecify the number of execution threads to use\n"
-                "  -l\t\tif present, results will be logged to an output file\n";
+                "  -l\t\tif present, results will be logged to an output file\n"
+                "  -s\t\tif present, results will not contain the matrix data\n";
     if (err != NULL) {
         fprintf(stderr, "matrix: %s", err);
     }
@@ -28,8 +31,9 @@ int main(int argc, char *argv[]) {
     char *filename = NULL;
     char *filename2 = NULL;
     bool log = false;
+    bool silent = false;
     int arg = 1; // Argument pointer
-    int threads = -1;
+    param.threads = -1;
 
     // Timing and outfile name variables
     time_t t = time(NULL);
@@ -98,19 +102,22 @@ int main(int argc, char *argv[]) {
             if (type != TYPE_INT) {
                 usage("invalid number of execution threads\n");
                 exit(EXIT_FAILURE);
-            }  else if (threads != -1) {
+            }  else if (param.threads != -1) {
                 usage("thread parameter should only be used once\n");
                 exit(EXIT_FAILURE);
             }
-            threads = strtoimax(argv[arg], NULL, 10);
+            param.threads = strtoimax(argv[arg], NULL, 10);
             if (errno == EINVAL) {
                 fprintf(stderr, "matrix: error processing thread value '%s'\n", argv[arg]);
                 exit(EXIT_FAILURE);
-            } else if (threads <= 0) {
+            } else if (errno == ERANGE) {
+                fprintf(stderr, "matrix: thread value out of range '%s'\n", argv[arg]);
+                exit(EXIT_FAILURE);
+            } else if (param.threads <= 0) {
                 usage("number of exeuction threads must be greater than 0\n");
                 exit(EXIT_FAILURE);
             } else {
-                omp_set_num_threads(threads);
+                omp_set_num_threads(param.threads);
             }
         } else if (strcmp(argv[arg], "-l") == 0) {
             if (log) { // Logfile already specified
@@ -118,6 +125,13 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             } else {
                 log = true;
+            }
+        } else if (strcmp(argv[arg], "-s") == 0) {
+            if (silent) { // Logfile already specified
+                usage("silent parameter should only be used once\n");
+                exit(EXIT_FAILURE);
+            } else {
+                silent = true;
             }
         } else if (strcmp(argv[arg], "-f") == 0) {
             if (filename != NULL) { // File already specified
@@ -168,6 +182,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Thread validation
+    if (param.threads == -1) {
+        param.threads = 4; // Default value
+    }
+
     switch (routine.type) {
         case SM:
             // Read input file
@@ -194,7 +213,9 @@ int main(int argc, char *argv[]) {
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, smresult.type);
                 smresult.type = TYPE_FLOAT; // Float scalar results in float matrix
-                write_coo_data(output, smresult);
+                if (!silent) {
+                    write_coo_data(output, smresult);
+                }
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
@@ -202,7 +223,9 @@ int main(int argc, char *argv[]) {
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, smresult.type);
                 smresult.type = TYPE_FLOAT; // Float scalar results in float matrix
-                write_coo_data(stdout, smresult);
+                if (!silent) {
+                    write_coo_data(stdout, smresult);
+                }
                 write_times(stdout, load_time, routine_time);
             }
             break;
@@ -248,10 +271,12 @@ int main(int argc, char *argv[]) {
                 write_details(output, filename, filename2, rows, cols, routine.type, trresult.type);
 
                 // Write single trace value
-                if (trresult.type == TYPE_INT) {
-                    fprintf(output, "%d\n", trace_result.i); 
-                } else {
-                    fprintf(output, "%f\n", trace_result.f);
+                if (!silent) {
+                    if (trresult.type == TYPE_INT) {
+                        fprintf(output, "%d\n", trace_result.i); 
+                    } else {
+                        fprintf(output, "%f\n", trace_result.f);
+                    }
                 }
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
@@ -259,10 +284,12 @@ int main(int argc, char *argv[]) {
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, trresult.type);
-                if (trresult.type == TYPE_INT) {
+                if (!silent) {
+                    if (trresult.type == TYPE_INT) {
                     fprintf(stdout, "%d\n", trace_result.i); 
-                } else {
-                    fprintf(stdout, "%f\n", trace_result.f);
+                    } else {
+                        fprintf(stdout, "%f\n", trace_result.f);
+                    }
                 }
                 write_times(stdout, load_time, routine_time);
             }
@@ -322,14 +349,18 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, adresult.type);
-                write_csr_data(output, adresult);
+                if (!silent) {
+                    write_csr_data(output, adresult);
+                }   
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, adresult.type);
-                write_csr_data(stdout, adresult);
+                if (!silent) {
+                    write_csr_data(stdout, adresult);
+                }
                 write_times(stdout, load_time, routine_time);
             }
             break;
@@ -358,14 +389,18 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, tsresult.type);
-                write_csr_data(output, tsresult);
+                if (!silent) {
+                    write_csr_data(output, tsresult);
+                }
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, tsresult.type);
-                write_csr_data(stdout, tsresult);
+                if (!silent) {
+                    write_csr_data(stdout, tsresult);
+                }
                 write_times(stdout, load_time, routine_time);
             }
             break;
@@ -393,7 +428,6 @@ int main(int argc, char *argv[]) {
             cols = read_mat_dim(mmfp2);
             data2 = read_line(mmfp2);
             struct CSC mm2 = csc_format(rows, cols, type, data2);
-            
             gettimeofday(&end, NULL);
             load_time += get_time(start, end);
 
@@ -424,14 +458,18 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, mmresult.type);
-                write_coo_data(output, mmresult);
+                if (!silent) {
+                    write_coo_data(output, mmresult);
+                }
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
                 fclose(output);
                 free(output_file);
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, mmresult.type);
-                write_coo_data(stdout, mmresult);
+                if (!silent) {
+                    write_coo_data(stdout, mmresult);
+                }
                 write_times(stdout, load_time, routine_time);
             }
             break;
