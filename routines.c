@@ -65,103 +65,161 @@ double trace_f(struct CSR matrix) {
     return trace;
 }
 
-struct CSR matrix_addition(struct CSR matrix, struct CSR matrix2) {
-    struct CSR result;
-    result.rows = matrix.rows;
-    result.cols = matrix.cols;
-    result.type = matrix.type;
+struct COO matrix_addition(struct CSR matrix, struct CSR matrix2) {
+    int totalcount = 0;
+    int i;
 
-    result.ia = allocate(sizeof(int) * (result.rows+1));
-    result.ja = allocate((matrix.count + matrix2.count) * sizeof(int));
-    result.nnz.i = allocate((matrix.count + matrix2.count) * sizeof(int));
-    result.count = 0;
-    result.ia[0] = 0;
+    // Removing loop carried dependancies
+    struct COO *result_local = allocate(matrix.rows * sizeof(struct COO));
+    for (i = 0; i < matrix.rows; i++) {
+        result_local[i].count = 0;
+        result_local[i].elements = allocate((matrix.count + matrix2.count) * sizeof(struct ELEMENT));
+    }
 
-    for (int i = 1; i < matrix.rows + 1; i++) {
-        int elements = matrix.ia[i] - matrix.ia[i-1];
-        int elements2 = matrix2.ia[i] - matrix2.ia[i-1];
-        int pos = matrix.ia[i-1];
-        int pos2 = matrix2.ia[i-1];
-        int total = elements + elements2;
+    #pragma omp parallel for reduction(+:totalcount) shared(matrix,matrix2) num_threads(param.threads)
+    for (i = 0; i < matrix.rows; i++) {
+        int elements = matrix.ia[i+1] - matrix.ia[i];
+        int elements2 = matrix2.ia[i+1] - matrix2.ia[i];
+        int m1seen = 0;
+        int m2seen = 0;
+        int pos = matrix.ia[i];
+        int pos2 = matrix2.ia[i];
 
-        while (total > 0) {
-            if (pos - matrix.ia[i-1] == elements) { // Matrix no more elements
-                while (pos2 - matrix2.ia[i-1] <= elements2) {
-                    result.nnz.i[result.count++] = matrix2.nnz.i[pos2++]; 
+        while (m1seen != elements || m2seen != elements2) {
+            if (m1seen == elements) { // Seen all matrix 1 elements
+                while (m2seen < elements2) {
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.i = matrix2.nnz.i[pos2++];
+                    m2seen++;
                 }
                 break;
-            } else if (pos2 - matrix2.ia[i-1] == elements2) { // Matrix2 no more elements
-                while (pos - matrix.ia[i-1] <= elements) {
-                    result.nnz.i[result.count++] = matrix.nnz.i[pos++]; 
+            } else if (m2seen == elements2) { // Matrix2 no more elements
+                while (m1seen < elements) {
+                    result_local[i].elements[result_local[i].count].y = matrix.ja[pos];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.i = matrix.nnz.i[pos++];
+                    m1seen++;
                 }
                 break;
             } else { // Both matrices have elements
-                if (matrix.ja[pos] < matrix2.ja[pos2]) {
-                    result.ja[result.count] = matrix.ja[pos];
-                    result.nnz.i[result.count++] = matrix.nnz.i[pos++];
-                } else if (matrix2.ja[pos2] < matrix.ja[pos]) {
-                    result.ja[result.count] = matrix2.ja[pos2];
-                    result.nnz.i[result.count++] = matrix2.nnz.i[pos2++];
-                } else { // Perform addition
-                    result.ja[result.count] = matrix.ja[pos];
-                    result.nnz.i[result.count++] = matrix.nnz.i[pos++] + matrix2.nnz.i[pos2++];
-                    total--;
+                if (matrix.ja[pos] < matrix2.ja[pos2]) { // Matrix1 lower ja
+                    result_local[i].elements[result_local[i].count].y = matrix.ja[pos];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.i = matrix.nnz.i[pos++]; 
+                    m1seen++;
+                } else if (matrix2.ja[pos2] < matrix.ja[pos]) { // Matrix2 lower ja
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.i = matrix2.nnz.i[pos2++]; 
+                    m2seen++;
+                } else { // Perform addition on same ja
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.i = matrix.nnz.i[pos++] + matrix2.nnz.i[pos2++]; 
+                    m1seen++;
+                    m2seen++;
                 }
-                total--;
             }
         }
-        result.ia[i] = result.count;
+        totalcount += result_local[i].count;
     }
+
+    struct COO result;
+    result.rows = matrix.rows;
+    result.cols = matrix.cols;
+    result.type = matrix.type;
+    result.elements = allocate(totalcount * sizeof(struct ELEMENT));
+    result.count = 0;
+    
+    // Put the local copies back together
+    for (i = 0; i < matrix.rows; i++) {
+        if (result_local[i].count != 0) {
+            memcpy(&result.elements[result.count], result_local[i].elements, result_local[i].count * sizeof(struct ELEMENT));
+            result.count += result_local[i].count;
+        }
+        free(result_local[i].elements);
+    }
+    free(result_local);
     return result;
 }
 
-struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
-    struct CSR result;
-    result.rows = matrix.rows;
-    result.cols = matrix.cols;
-    result.type = matrix.type;
+struct COO matrix_addition_f(struct CSR matrix, struct CSR matrix2) {
+    int totalcount = 0;
+    int i;
 
-    result.ia = allocate(sizeof(int) * (result.rows+1));
-    result.ja = allocate((matrix.count + matrix2.count) * sizeof(int));
-    result.nnz.f = allocate((matrix.count + matrix2.count) * sizeof(double));
-    result.count = 0;
-    result.ia[0] = 0;
+    // Removing loop carried dependancies
+    struct COO *result_local = allocate(matrix.rows * sizeof(struct COO));
+    for (i = 0; i < matrix.rows; i++) {
+        result_local[i].count = 0;
+        result_local[i].elements = allocate((matrix.count + matrix2.count) * sizeof(struct ELEMENT));
+    }
 
-    for (int i = 1; i < matrix.rows + 1; i++) {
-        int elements = matrix.ia[i] - matrix.ia[i-1];
-        int elements2 = matrix2.ia[i] - matrix2.ia[i-1];
-        int pos = matrix.ia[i-1];
-        int pos2 = matrix2.ia[i-1];
-        int total = elements + elements2;
+    #pragma omp parallel for reduction(+:totalcount) shared(matrix,matrix2) num_threads(param.threads)
+    for (i = 0; i < matrix.rows; i++) {
+        int elements = matrix.ia[i+1] - matrix.ia[i];
+        int elements2 = matrix2.ia[i+1] - matrix2.ia[i];
+        int m1seen = 0;
+        int m2seen = 0;
+        int pos = matrix.ia[i];
+        int pos2 = matrix2.ia[i];
 
-        while (total > 0) {
-            if (pos - matrix.ia[i-1] == elements) { // Matrix no more elements
-                while (pos2 - matrix2.ia[i-1] <= elements2) {
-                    result.nnz.f[result.count++] = matrix2.nnz.f[pos2++];
+        while (m1seen != elements || m2seen != elements2) {
+            if (m1seen == elements) { // Seen all matrix 1 elements
+                while (m2seen < elements2) {
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.f = matrix2.nnz.f[pos2++];
+                    m2seen++;
                 }
                 break;
-            } else if (pos2 - matrix2.ia[i-1] == elements2) { // Matrix2 no more elements
-                while (pos - matrix.ia[i-1] <= elements) {
-                    result.nnz.f[result.count++] = matrix.nnz.f[pos++];
+            } else if (m2seen == elements2) { // Matrix2 no more elements
+                while (m1seen < elements) {
+                    result_local[i].elements[result_local[i].count].y = matrix.ja[pos];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.f = matrix.nnz.f[pos++];
+                    m1seen++;
                 }
                 break;
             } else { // Both matrices have elements
-                if (matrix.ja[pos] < matrix2.ja[pos2]) {
-                    result.ja[result.count] = matrix.ja[pos];
-                    result.nnz.f[result.count++] = matrix.nnz.f[pos++];
-                } else if (matrix2.ja[pos2] < matrix.ja[pos]) {
-                    result.ja[result.count] = matrix2.ja[pos2];
-                    result.nnz.f[result.count++] = matrix2.nnz.f[pos2++];
-                } else { // Perform addition
-                    result.ja[result.count] = matrix.ja[pos];
-                    result.nnz.f[result.count++] = matrix.nnz.f[pos++] + matrix2.nnz.f[pos2++];
-                    total--;
+                if (matrix.ja[pos] < matrix2.ja[pos2]) { // Matrix1 lower ja
+                    result_local[i].elements[result_local[i].count].y = matrix.ja[pos];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.f = matrix.nnz.f[pos++]; 
+                    m1seen++;
+                } else if (matrix2.ja[pos2] < matrix.ja[pos]) { // Matrix2 lower ja
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.f = matrix2.nnz.f[pos2++]; 
+                    m2seen++;
+                } else { // Perform addition on same ja
+                    result_local[i].elements[result_local[i].count].y = matrix2.ja[pos2];
+                    result_local[i].elements[result_local[i].count].x = i;
+                    result_local[i].elements[result_local[i].count++].value.f = matrix.nnz.f[pos++] + matrix2.nnz.f[pos2++]; 
+                    m1seen++;
+                    m2seen++;
                 }
-                total--;
             }
         }
-        result.ia[i] = result.count;
+        totalcount += result_local[i].count;
     }
+
+    struct COO result;
+    result.rows = matrix.rows;
+    result.cols = matrix.cols;
+    result.type = matrix.type;
+    result.elements = allocate(totalcount * sizeof(struct ELEMENT));
+    result.count = 0;
+    
+    // Put the local copies back together
+    for (i = 0; i < matrix.rows; i++) {
+        if (result_local[i].count != 0) {
+            memcpy(&result.elements[result.count], result_local[i].elements, result_local[i].count * sizeof(struct ELEMENT));
+            result.count += result_local[i].count;
+        }
+        free(result_local[i].elements);
+    }
+    free(result_local);
     return result;
 }
 
@@ -192,18 +250,21 @@ struct CSR transpose(struct CSC matrix) {
 }
 
 struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2) {
-    struct COO result;
-    result.count = 0;
-    result.type = matrix.type;
-    size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
-    result.elements = allocate(elements_size);
-    result.rows = matrix.rows;
-    result.cols = matrix2.cols;
+    int totalcount = 0;
+    int i;
 
-    for (int i = 0; i < result.rows; i++) {
+    // Removing loop carried dependancies
+    struct COO *result_local = allocate(matrix.rows * sizeof(struct COO));
+    for (i = 0; i < matrix.rows; i++) {
+        result_local[i].count = 0;
+        result_local[i].elements = allocate((matrix2.cols) * sizeof(struct ELEMENT));
+    }
+
+    #pragma omp parallel for reduction(+:totalcount) shared(matrix,matrix2) num_threads(param.threads)
+    for (i = 0; i < matrix.rows; i++) {
         int m1count = matrix.ia[i+1] - matrix.ia[i];
 
-        for (int j = 0; j < result.cols; j++) {
+        for (int j = 0; j < matrix2.cols; j++) {
             int dp = 0; // Final dot product
 
             int m1pos = matrix.ia[i];
@@ -226,33 +287,49 @@ struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2) {
                 }
             }
             if (dp != 0) {
-                // Dynamically allocate memory for elements struct pointer
-                if (((result.count) * sizeof(struct ELEMENT)) == elements_size) {
-                    elements_size *= 2;
-                    result.elements = reallocate(result.elements, elements_size);
-                }
-                result.elements[result.count].value.i = dp;
-                result.elements[result.count].x = i;
-                result.elements[result.count++].y = j;
+                result_local[i].elements[result_local[i].count].value.i = dp;
+                result_local[i].elements[result_local[i].count].x = i;
+                result_local[i].elements[result_local[i].count++].y = j;
             }
         }
+        totalcount += result_local[i].count;
     }
+
+    struct COO result;
+    result.count = 0;
+    result.type = matrix.type;
+    result.elements = allocate(totalcount * sizeof(struct ELEMENT));
+    result.rows = matrix.rows;
+    result.cols = matrix2.cols;
+
+    // Put the local copies back together
+    for (i = 0; i < matrix.rows; i++) {
+        if (result_local[i].count != 0) {
+            memcpy(&result.elements[result.count], result_local[i].elements, result_local[i].count * sizeof(struct ELEMENT));
+            result.count += result_local[i].count;
+        }
+        free(result_local[i].elements);
+    }
+    free(result_local);
     return result;
 }
 
 struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2) {
-    struct COO result;
-    result.count = 0;
-    result.type = matrix.type;
-    size_t elements_size = MEMSIZ * sizeof(struct ELEMENT);
-    result.elements = allocate(elements_size);
-    result.rows = matrix.rows;
-    result.cols = matrix2.cols;
+    int totalcount = 0;
+    int i;
 
-    for (int i = 0; i < result.rows; i++) {
+    // Removing loop carried dependancies
+    struct COO *result_local = allocate(matrix.rows * sizeof(struct COO));
+    for (i = 0; i < matrix.rows; i++) {
+        result_local[i].count = 0;
+        result_local[i].elements = allocate((matrix2.cols) * sizeof(struct ELEMENT));
+    }
+
+    #pragma omp parallel for reduction(+:totalcount) shared(matrix,matrix2) num_threads(param.threads)
+    for (i = 0; i < matrix.rows; i++) {
         int m1count = matrix.ia[i+1] - matrix.ia[i];
 
-        for (int j = 0; j < result.cols; j++) {
+        for (int j = 0; j < matrix2.cols; j++) {
             double dp = 0; // Final dot product
 
             int m1pos = matrix.ia[i];
@@ -275,81 +352,29 @@ struct COO matrix_multiply_f(struct CSR matrix, struct CSC matrix2) {
                 }
             }
             if (dp != 0) {
-                // Dynamically allocate memory for elements struct pointer
-                if (((result.count) * sizeof(struct ELEMENT)) == elements_size) {
-                    elements_size *= 2;
-                    result.elements = reallocate(result.elements, elements_size);
-                }
-                result.elements[result.count].value.f = dp;
-                result.elements[result.count].x = i;
-                result.elements[result.count++].y = j;
-            }
-        }
-    }
-    return result;
-}
-
-/**
-struct COO matrix_multiply(struct CSR matrix, struct CSC matrix2) {
-    struct COO result;
-    int i, j;
-    result.count = 0;
-    result.type = matrix.type;
-    result.elements = allocate((matrix.count + matrix2.count) * sizeof(struct ELEMENT));
-    result.rows = matrix.rows;
-    result.cols = matrix2.cols;
-
-    struct COO *result_local = allocate(result.rows * sizeof(struct COO)); // Remove loop carried dependencies
-
-    for (i = 0; i < result.rows; i++) {
-        result_local[i].elements = allocate((matrix.ia[i+1] - matrix.ia[i]) * sizeof(struct ELEMENT));
-        result_local[i].count = 0;
-    }
-
-    //#pragma omp parallel for shared(matrix,matrix2,result_local)
-    for (i = 0; i < result.rows; i++) {
-        int m1count = matrix.ia[i+1] - matrix.ia[i];
-
-        for (j = 0; j < result.cols; j++) {
-            int dp = 0; // Final dot product
-
-            int m1pos = matrix.ia[i];
-            int m1seen = 0;
-            int m2count = matrix2.ia[j+1] - matrix2.ia[j];
-            int m2pos = matrix2.ia[j];
-            int m2seen = 0;
-
-            while (m1seen != m1count && m2seen != m2count) {
-                if (matrix.ja[m1pos] == matrix2.ja[m2pos]) { // Row and col index match
-                    dp += (matrix.nnz.i[m1pos++] * matrix2.nnz.i[m2pos++]);
-                    m1seen++;
-                    m2seen++;
-                } else if (matrix.ja[m1pos] < matrix2.ja[m2pos]) {
-                    m1seen++;
-                    m1pos++;
-                } else {
-                    m2seen++;
-                    m2pos++;
-                }
-            }
-            if (dp != 0) {
-                // Store values in local result copy
-                result_local[i].elements[result_local[i].count].value.i = dp;
+                result_local[i].elements[result_local[i].count].value.f = dp;
                 result_local[i].elements[result_local[i].count].x = i;
                 result_local[i].elements[result_local[i].count++].y = j;
             }
         }
+        totalcount += result_local[i].count;
     }
 
-    // Put local results together
-    for (i = 0; i < result.rows; i++) {
-        for (j = 0; j < result_local[i].count; j++) {
-            result.elements[result.count].value.i = result_local[i].elements[j].value.i;
-            result.elements[result.count].x = result_local[i].elements[j].x;
-            result.elements[result.count++].y = result_local[i].elements[j].y;
+    struct COO result;
+    result.count = 0;
+    result.type = matrix.type;
+    result.elements = allocate(totalcount * sizeof(struct ELEMENT));
+    result.rows = matrix.rows;
+    result.cols = matrix2.cols;
+
+    // Put the local copies back together
+    for (i = 0; i < matrix.rows; i++) {
+        if (result_local[i].count != 0) {
+            memcpy(&result.elements[result.count], result_local[i].elements, result_local[i].count * sizeof(struct ELEMENT));
+            result.count += result_local[i].count;
         }
+        free(result_local[i].elements);
     }
     free(result_local);
-    result_local = NULL;
     return result;
-}**/
+}

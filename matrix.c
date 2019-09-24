@@ -330,7 +330,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "matrix: the addition routine should only be performed on matrices of identical variable types\n");
                 exit(EXIT_FAILURE);
             }
-            struct CSR adresult;
+            struct COO adresult;
 
             gettimeofday(&start, NULL);
             if (ad1.type == TYPE_INT) {
@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
                 }
                 write_details(output, filename, filename2, rows, cols, routine.type, adresult.type);
                 if (!silent) {
-                    write_csr_data(output, adresult);
+                    write_coo_data(output, adresult);
                 }   
                 write_times(output, load_time, routine_time);
                 printf("matrix: successfully logged results to '%s'\n", output_file);
@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
             } else {
                 write_details(stdout, filename, filename2, rows, cols, routine.type, adresult.type);
                 if (!silent) {
-                    write_csr_data(stdout, adresult);
+                    write_coo_data(stdout, adresult);
                 }
                 write_times(stdout, load_time, routine_time);
             }

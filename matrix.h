@@ -133,7 +133,7 @@ extern double trace_f(struct CSR matrix);
  * @param matrix2 The second matrix
  * @return struct CSR The resulting added matrix
  */
-extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
+extern struct COO matrix_addition(struct CSR matrix1, struct CSR matrix2);
 
 /**
  * Performs matrix addition on two given float matrices
@@ -142,7 +142,7 @@ extern struct CSR matrix_addition(struct CSR matrix1, struct CSR matrix2);
  * @param matrix2 The second matrix
  * @return struct CSR The resulting added matrix
  */
-extern struct CSR matrix_addition_f(struct CSR matrix, struct CSR matrix2);
+extern struct COO matrix_addition_f(struct CSR matrix, struct CSR matrix2);
 
 /**
  * Transposes a given matrix

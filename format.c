@@ -9,7 +9,6 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.type = type;
     matrix.count = 0;
-    errno = 0;
     
     // Data reading variables
     int len, pos = 0;
@@ -38,6 +37,7 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
 
             // Zero value filter
             if (type == TYPE_INT) {
+                errno = 0;
                 int value = strtoimax(val, NULL, 10);
                 if (errno == EINVAL) {
                     fprintf(stderr, "Invalid value in matrix data '%s'\n", val);
@@ -57,6 +57,7 @@ struct COO coo_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                     matrix.elements[matrix.count++].y = j;
                 }
             } else {
+                errno = 0;
                 double value = strtod(val, NULL);
                 if (errno == ERANGE) {
                     fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
@@ -99,7 +100,6 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
-    errno = 0;
 
     // Data reading variables
     int len, pos = 0;
@@ -128,6 +128,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
 
             // Zero value filter
             if (type == TYPE_INT) {
+                errno = 0;
                 int value = strtoimax(val, NULL, 10);
                 if (errno == EINVAL) {
                     fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
@@ -148,6 +149,7 @@ struct CSR csr_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                     matrix.ja[matrix.count++] = j;
                 }
             } else {
+                errno = 0;
                 double value = strtod(val, NULL);
                 if (errno == ERANGE) {
                     fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
@@ -192,7 +194,6 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
     matrix.cols = cols;
     matrix.count = 0;
     matrix.type = type;
-    errno = 0;
 
     // Data reading variables
     int len, pos = 0;
@@ -222,6 +223,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                 pos++; // Move to next val
 
                 // Zero value filter and conversion
+                errno = 0;
                 int value = strtoimax(val, NULL, 10);
                 if (errno == EINVAL) {
                     fprintf(stderr, "matrix: invalid value in matrix data '%s'\n", val);
@@ -275,6 +277,7 @@ struct CSC csc_format(int rows, int cols, enum VAR_TYPE type, char *data) {
                 val[len] = '\0';
                 pos++; // Move to next val
 
+                errno = 0;
                 double value = strtod(val, NULL);
                 if (errno == ERANGE) {
                     fprintf(stderr, "matrix: failed to convert scalar value '%s' to double\n", val);
