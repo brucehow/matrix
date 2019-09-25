@@ -23,11 +23,6 @@
 #define OUTPUT_NAME_SIZE 31
 #define SID 22242664
 
-// DEBUG MACROS
-#define pint(x) printf("%s = %d\n", #x, x); fflush(stdout);
-#define pstr(x) printf("%s = %s\n", #x, x); fflush(stdout);
-#define p() printf("HERE\n");fflush(stdout);
-
 // Matrix type classifier
 enum VAR_TYPE {TYPE_INT, TYPE_FLOAT, INVALID};
 enum ROUTINE_TYPE {SM, TR, AD, TS, MM, UNDEF};
